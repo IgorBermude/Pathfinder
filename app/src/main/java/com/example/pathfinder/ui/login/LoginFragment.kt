@@ -18,6 +18,8 @@ import com.example.pathfinder.R
 import com.example.pathfinder.data.AuthViewModel
 import com.example.pathfinder.databinding.FragmentLoginBinding
 import kotlinx.coroutines.launch
+import android.content.Intent
+import com.example.pathfinder.ui.MainActivity
 
 class LoginFragment : Fragment() {
     private var binding: FragmentLoginBinding? = null
@@ -51,6 +53,9 @@ class LoginFragment : Fragment() {
                         LoginUiState.SUCCESS -> {
                             //binding?.progressBar?.visibility = View.GONE
                             Toast.makeText(requireContext(), "Login efetuado com sucesso", Toast.LENGTH_SHORT).show()
+                            val intent = Intent(requireActivity(), MainActivity::class.java)
+                            startActivity(intent)
+                            requireActivity().finish()
                         }
                         LoginUiState.ERROR -> {
                             //binding?.progressBar?.visibility = View.GONE

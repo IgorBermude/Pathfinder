@@ -10,7 +10,9 @@ import android.widget.Toast
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import com.example.pathfinder.LoginUiState
+import com.example.pathfinder.R
 import com.example.pathfinder.data.AuthViewModel
 import com.example.pathfinder.databinding.FragmentRegisterBinding
 import kotlinx.coroutines.launch
@@ -42,6 +44,7 @@ class RegisterFragment : Fragment() {
                         LoginUiState.SUCCESS -> {
                             //binding?.progressBar?.visibility = View.GONE
                             Toast.makeText(requireContext(), "Login efetuado com sucesso", Toast.LENGTH_SHORT).show()
+                            findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
                         }
                         LoginUiState.ERROR -> {
                             //binding?.progressBar?.visibility = View.GONE
