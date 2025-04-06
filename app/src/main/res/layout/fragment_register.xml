@@ -155,19 +155,21 @@
         android:id="@+id/btnLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:background="@drawable/custom_button_background"
         android:layout_marginStart="@dimen/login_button_welcome_screen_margin_top"
         android:layout_marginEnd="@dimen/login_button_welcome_screen_margin_top"
         android:layout_marginBottom="@dimen/btn_create_register_screen_margin_bottom"
+        android:background="@drawable/custom_button_background"
         android:padding="@dimen/btn_create_register_screen_padding"
         android:text="@string/create_btn"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
         android:textSize="@dimen/btn_login_text_size"
         android:textStyle="bold"
-        android:textColor="@color/white"
-        android:textAllCaps="false"
-        />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tilPhoneNumber"
+        app:layout_constraintVertical_bias="1.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

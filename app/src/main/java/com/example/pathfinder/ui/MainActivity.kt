@@ -1,10 +1,7 @@
 package com.example.pathfinder.ui
 
-import android.content.Context
 import android.os.Bundle
 import android.view.View
-import android.content.SharedPreferences
-import android.preference.PreferenceManager
 import android.widget.Toast
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
@@ -29,13 +26,14 @@ class MainActivity : AppCompatActivity() {
         val navView: BottomNavigationView = binding.navView
 
         // Verificar se o usuário está logado
+        // Se não tiver logado leva para a tela de login
         if (!isUserLoggedIn()) {
             navView.visibility = View.GONE // Esconder o BottomNavigationView
             val navController = findNavController(R.id.nav_host_fragment_activity_main)
             navController.navigate(R.id.action_navigation_home_to_loginFragment)
             showMessage("Usuário não está logado")
             return
-        } else {
+        } else { // Se o usuário estiver logado, vai para a tela home e mostra o BottomNavigationView
             navView.visibility = View.VISIBLE // Mostrar o BottomNavigationView
             val navController = findNavController(R.id.nav_host_fragment_activity_main)
             navController.navigate(R.id.navigation_home)
@@ -47,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         // menu should be considered as top level destinations.
         val appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications
+                R.id.navigation_home, R.id.navigation_rotas, R.id.navigation_notifications
             )
         )
         setupActionBarWithNavController(navController, appBarConfiguration)

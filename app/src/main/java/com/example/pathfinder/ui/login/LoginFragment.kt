@@ -20,6 +20,8 @@ import com.example.pathfinder.databinding.FragmentLoginBinding
 import kotlinx.coroutines.launch
 import android.content.Intent
 import com.example.pathfinder.ui.MainActivity
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.addCallback
 
 class LoginFragment : Fragment() {
     private var binding: FragmentLoginBinding? = null
@@ -40,6 +42,11 @@ class LoginFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         navController = view.findNavController()
 
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                requireActivity().finish()
+            }
+        })
 
         lifecycleScope.launch {
             //Previne bugs

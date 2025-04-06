@@ -13,13 +13,16 @@
         <action
             android:id="@+id/action_navigation_home_to_loginFragment"
             app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_navigation_home_to_timelineFragment"
+            app:destination="@id/navigation_timeline" />
+        <action
+            android:id="@+id/action_navigation_home_to_rotasFragment"
+            app:destination="@id/navigation_timeline" />
+        <action
+            android:id="@+id/action_navigation_home_to_navigation_notifications"
+            app:destination="@id/navigation_notifications" />
     </fragment>
-
-    <fragment
-        android:id="@+id/navigation_dashboard"
-        android:name="com.example.pathfinder.ui.dashboard.DashboardFragment"
-        android:label="@string/title_dashboard"
-        tools:layout="@layout/fragment_dashboard" />
 
     <fragment
         android:id="@+id/navigation_notifications"
@@ -48,8 +51,16 @@
         <action
             android:id="@+id/action_loginFragment_to_navigation_home"
             app:destination="@id/navigation_home" />
-        <action
-            android:id="@+id/action_loginFragment_to_navigation_dashboard"
-            app:destination="@id/navigation_dashboard" />
+
     </fragment>
+    <fragment
+        android:id="@+id/navigation_rotas"
+        android:name="com.example.pathfinder.ui.rotas.RotasFragment"
+        android:label="fragment_rotas"
+        tools:layout="@layout/fragment_rotas" />
+    <fragment
+        android:id="@+id/navigation_timeline"
+        android:name="com.example.pathfinder.ui.timeline.TimelineFragment"
+        android:label="fragment_timeline"
+        tools:layout="@layout/fragment_timeline" />
 </navigation>
