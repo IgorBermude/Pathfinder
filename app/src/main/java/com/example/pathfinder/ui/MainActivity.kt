@@ -1,6 +1,8 @@
 package com.example.pathfinder.ui
 
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -58,5 +60,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun showMessage(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_home, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_profile -> {
+                // Ação quando o ícone de perfil for clicado
+                Toast.makeText(this, "Perfil clicado", Toast.LENGTH_SHORT).show()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 }
