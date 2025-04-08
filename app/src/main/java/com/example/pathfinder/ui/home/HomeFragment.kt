@@ -6,8 +6,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.commit
 import androidx.lifecycle.ViewModelProvider
+import com.example.pathfinder.R
 import com.example.pathfinder.databinding.FragmentHomeBinding
+import com.example.pathfinder.ui.components.MapaFragment
 
 class HomeFragment : Fragment() {
 
@@ -28,9 +31,8 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val textView: TextView = binding.textHome
-        homeViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
+        childFragmentManager.commit {
+            replace(R.id.map_container, MapaFragment())
         }
 
         return root
