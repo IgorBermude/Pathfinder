@@ -24,12 +24,8 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        
+
         val navView: BottomNavigationView = binding.navView
-
-        
-
-
 
         // Verificar se o usuário está logado
         // Se não tiver logado leva para a tela de login
@@ -67,12 +63,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        // Só mostra o icone de perfil se o usuário estiver logado
-        if (isUserLoggedIn()) {
-            menuInflater.inflate(R.menu.menu_home, menu)
-            return true
-        }
-        return false
+        menuInflater.inflate(R.menu.menu_home, menu)
+        return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
