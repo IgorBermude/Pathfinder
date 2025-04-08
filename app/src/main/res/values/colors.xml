@@ -9,4 +9,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="textColor">#1F2C53</color>
     <color name="buttonBackgroundColor">#835DEE</color>
+    <color name="verde_padrao">#00C897</color>
+    <color name="verde_variante">#00936E</color>
 </resources>

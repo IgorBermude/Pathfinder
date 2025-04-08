@@ -14,6 +14,7 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.pathfinder.R
 import com.example.pathfinder.databinding.ActivityMainBinding
+import com.example.pathfinder.ui.login.LoginFragment
 import com.google.firebase.auth.FirebaseAuth
 
 
@@ -65,7 +66,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu_home, menu)
+        if(isUserLoggedIn()){
+            menuInflater.inflate(R.menu.menu_home, menu)
+        }
         return true
     }
 
@@ -73,7 +76,16 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.action_profile -> {
                 // Ação quando o ícone de perfil for clicado
-                Toast.makeText(this, "Perfil clicado", Toast.LENGTH_SHORT).show()
+                true
+            }
+            R.id.menu_fechar -> {
+                finish() // Fecha o aplicativo
+                true
+            }
+            R.id.menu_sair -> {
+                FirebaseAuth.getInstance().signOut() // Faz logout do usuário
+                val navController = findNavController(R.id.nav_host_fragment_activity_main)
+                navController.navigate(R.id.action_navigation_home_to_loginFragment)
                 true
             }
             else -> super.onOptionsItemSelected(item)
