@@ -6,6 +6,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".ui.register.RegisterFragment">
 
+
     <TextView
         android:id="@+id/tvTitleRegisterScreen"
         android:layout_width="wrap_content"
@@ -156,8 +157,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/login_button_welcome_screen_margin_top"
+        android:layout_marginTop="48dp"
         android:layout_marginEnd="@dimen/login_button_welcome_screen_margin_top"
-        android:layout_marginBottom="@dimen/btn_create_register_screen_margin_bottom"
         android:background="@drawable/custom_button_background"
         android:padding="@dimen/btn_create_register_screen_padding"
         android:text="@string/create_btn"
@@ -165,11 +166,9 @@
         android:textColor="@color/white"
         android:textSize="@dimen/btn_login_text_size"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tilPhoneNumber"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintTop_toBottomOf="@+id/tilPhoneNumber" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
