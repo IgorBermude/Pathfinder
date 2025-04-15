@@ -74,8 +74,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.action_profile -> {
-                // Ação quando o ícone de perfil for clicado
+            R.id.menu_profile -> {
+                /*supportActionBar?.hide()
+                binding.navView.visibility = View.GONE // Esconde o BottomNavigationView*/
+                val navController = findNavController(R.id.nav_host_fragment_activity_main)
+                navController.navigate(R.id.profileFragment)
+                invalidateOptionsMenu()
                 true
             }
             R.id.menu_fechar -> {
@@ -84,8 +88,9 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.menu_sair -> {
                 FirebaseAuth.getInstance().signOut() // Faz logout do usuário
-                val navController = findNavController(R.id.nav_host_fragment_activity_main)
-                navController.navigate(R.id.action_navigation_home_to_loginFragment)
+                val intent = Intent(this, MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent) // Redireciona para MainActivity
                 true
             }
             else -> super.onOptionsItemSelected(item)

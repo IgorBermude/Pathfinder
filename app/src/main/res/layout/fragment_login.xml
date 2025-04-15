@@ -19,23 +19,12 @@
         android:textSize="@dimen/tv_text_login_screen_size"
         />
 
-    <TextView
-        android:id="@+id/tvSubTitleLoginScreen"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/tv_text_sub_title"
-        app:layout_constraintTop_toBottomOf="@id/tvTitleLoginScreen"
-        app:layout_constraintStart_toStartOf="@id/tvTitleLoginScreen"
-        android:layout_marginTop="@dimen/tv_text_login_screen_margin_top"
-        android:textSize="@dimen/tv_text_sub_title_login_screen"/>
-
-    <!-- EMAIL SESSION !-->
 
     <TextView
         android:id="@+id/tvEmail"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/tvSubTitleLoginScreen"
+        app:layout_constraintTop_toBottomOf="@id/tvTitleLoginScreen"
         app:layout_constraintStart_toStartOf="@id/tilEmail"
         android:text="Email"
         android:textSize="16sp"
