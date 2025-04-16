@@ -63,6 +63,22 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling:1.5.4")
     implementation("androidx.compose.foundation:foundation:1.5.4")
     implementation("androidx.compose.material3:material3:1.1.2")
+    // RecyclerView (para a lista de posts)
+    implementation ("androidx.recyclerview:recyclerview:1.3.2")
+
+    // CardView (para o layout dos posts)
+    implementation ("androidx.cardview:cardview:1.0.0")
+
+    // Material Design (para o FloatingActionButton e outros componentes)
+    implementation ("com.google.android.material:material:1.11.0")
+
+    // Glide (para carregar imagens dos posts)
+    implementation ("com.github.bumptech.glide:glide:4.16.0")
+
+    // ViewModel e LiveData (para gerenciar os dados)
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation ("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    implementation ("androidx.fragment:fragment-ktx:1.6.2")
     implementation(libs.androidx.legacy.support.v4)
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.auth)

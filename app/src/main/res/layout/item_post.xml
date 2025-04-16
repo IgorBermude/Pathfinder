@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:elevation="4dp"
+    app:cardCornerRadius="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Cabeçalho do Post -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <ImageView
+                android:id="@+id/iv_user_avatar"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/sym_def_app_icon"
+                tools:src="@android:drawable/sym_def_app_icon" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginStart="8dp">
+
+                <TextView
+                    android:id="@+id/tv_username"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:text="Nome do Usuário" />
+
+                <TextView
+                    android:id="@+id/tv_post_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/black"
+                    tools:text="há 2 horas" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Conteúdo do Post -->
+        <TextView
+            android:id="@+id/tv_post_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            tools:text="Este é um exemplo de conteúdo de postagem na timeline do aplicativo." />
+
+        <!-- Imagem do Post (opcional) -->
+        <ImageView
+            android:id="@+id/iv_post_image"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            tools:visibility="visible"
+            tools:src="@android:drawable/ic_menu_gallery" />
+
+        <!-- Ações do Post -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <ImageButton
+                android:id="@+id/ib_like"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/btn_star" />
+
+            <ImageButton
+                android:id="@+id/ib_comment"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_edit" />
+
+            <ImageButton
+                android:id="@+id/ib_share"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_share" />
+
+            <ImageButton
+                android:id="@+id/ib_delete"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="16dp"
+                android:src="@android:drawable/ic_menu_delete"
+                android:visibility="gone"/>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
