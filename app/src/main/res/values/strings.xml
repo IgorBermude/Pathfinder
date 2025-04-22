@@ -24,7 +24,9 @@
     <string name="password">Senha</string>
     <string name="your_password">Sua senha</string>
     <string name="phone">Telefone</string>
+    <string name="idade">Idade</string>
     <string name="your_phone">Seu telefone</string>
+    <string name="sua_idade">Sua idade</string>
     <string name="create_btn">Criar</string>
     <string name="tv_text_login_screen">Bem vindo de volta</string>
     <string name="tv_text_sub_title">Sentimos sua falta</string>

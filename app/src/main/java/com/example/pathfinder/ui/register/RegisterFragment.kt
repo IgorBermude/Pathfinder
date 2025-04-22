@@ -14,8 +14,12 @@ import androidx.navigation.fragment.findNavController
 import com.example.pathfinder.LoginUiState
 import com.example.pathfinder.R
 import com.example.pathfinder.data.AuthViewModel
+import com.example.pathfinder.data.models.Usuario
 import com.example.pathfinder.databinding.FragmentRegisterBinding
 import kotlinx.coroutines.launch
+import java.util.Date
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class RegisterFragment : Fragment() {
     private var binding: FragmentRegisterBinding? = null
@@ -55,22 +59,27 @@ class RegisterFragment : Fragment() {
             }
         }
 
-        binding?.btnLogin?.setOnClickListener{
+        binding?.btnLogin?.setOnClickListener {
             val name: String = binding?.etName?.text.toString()
             val email: String = binding?.etEmail?.text.toString()
             val password: String = binding?.etPassword?.text.toString()
-            val phoneNumber: String = binding?.etPhoneNumber?.text.toString()
+            val ageInput: String = binding?.etAge?.text.toString()
 
-            if(name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && phoneNumber.isNotEmpty()){
-                lifecycleScope.launch {
-                    vm.register(email, password)
+            if (name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && ageInput.isNotEmpty()) {
+                try {
+                    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                    val age: Date = dateFormat.parse(ageInput) ?: throw IllegalArgumentException("Data inválida")
+                    val usuario = Usuario(nomeUsuario = name, emailUsuario = email, senhaUsuario = password, idadeUsuario = age)
+                    lifecycleScope.launch {
+                        vm.register(usuario)
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Formato de data inválido. Use dd/MM/yyyy.", Toast.LENGTH_SHORT).show()
                 }
-            } else{
+            } else {
                 Toast.makeText(requireContext(), "Preencha todos os campos", Toast.LENGTH_SHORT).show()
             }
         }
-
-        
     }
 
     override fun onDestroyView() {

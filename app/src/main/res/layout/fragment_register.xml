@@ -127,29 +127,29 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/tilPassword"
         app:layout_constraintStart_toStartOf="@id/tilEmail"
-        android:text="@string/phone"
+        android:text="@string/idade"
         android:textSize="@dimen/tv_name_text_size_register_screen"
         android:layout_marginTop="@dimen/tv_register_screen_margin_top"
         />
 
+    <!-- AGE SESSION !-->
+
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilPhoneNumber"
+        android:id="@+id/tilAge"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/tvPhoneNumber"
         android:layout_marginTop="@dimen/tv_til_margin_top_register_screen"
         android:layout_marginStart="@dimen/margin_side_register_screen"
-        android:layout_marginEnd="@dimen/margin_side_register_screen"
-        >
+        android:layout_marginEnd="@dimen/margin_side_register_screen">
 
         <androidx.appcompat.widget.AppCompatEditText
-            android:id="@+id/etPhoneNumber"
+            android:id="@+id/etAge"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:inputType="text"
-            android:hint="@string/your_phone"
-            />
-
+            android:hint="Sua idade (dd/MM/yyyy)"
+            android:maxLength="10" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.appcompat.widget.AppCompatButton
@@ -169,6 +169,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tilPhoneNumber" />
+        app:layout_constraintTop_toBottomOf="@+id/tilAge" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

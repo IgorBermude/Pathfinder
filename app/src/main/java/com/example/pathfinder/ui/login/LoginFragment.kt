@@ -22,6 +22,7 @@ import android.content.Intent
 import com.example.pathfinder.ui.MainActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
+import com.example.pathfinder.data.models.Usuario
 
 class LoginFragment : Fragment() {
     private var binding: FragmentLoginBinding? = null
@@ -73,13 +74,14 @@ class LoginFragment : Fragment() {
             }
         }
 
-        binding?.btnLogin?.setOnClickListener{
+        binding?.btnLogin?.setOnClickListener {
             val email: String = binding?.etEmail?.text.toString()
             val password: String = binding?.etPassword?.text.toString()
 
-            if(email.isNotEmpty() && password.isNotEmpty()){
+            if (email.isNotEmpty() && password.isNotEmpty()) {
+                val usuario = Usuario(emailUsuario = email, senhaUsuario = password)
                 lifecycleScope.launch {
-                    vm.login(email, password)
+                    vm.login(usuario)
                 }
             } else {
                 Toast.makeText(requireContext(), "Por favor preencha todos os campos", Toast.LENGTH_SHORT).show()
