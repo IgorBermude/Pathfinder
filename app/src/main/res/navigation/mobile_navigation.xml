@@ -14,12 +14,6 @@
             android:id="@+id/action_navigation_home_to_loginFragment"
             app:destination="@id/loginFragment" />
         <action
-            android:id="@+id/action_navigation_home_to_timelineFragment"
-            app:destination="@id/navigation_timeline" />
-        <action
-            android:id="@+id/action_navigation_home_to_rotasFragment"
-            app:destination="@id/navigation_timeline" />
-        <action
             android:id="@+id/action_navigation_home_to_navigation_notifications"
             app:destination="@id/navigation_notifications" />
     </fragment>

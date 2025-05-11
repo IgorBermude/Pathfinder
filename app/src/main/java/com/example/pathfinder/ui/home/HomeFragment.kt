@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
@@ -33,6 +34,29 @@ class HomeFragment : Fragment() {
 
         childFragmentManager.commit {
             replace(R.id.map_container, MapaFragment())
+        }
+
+        binding.actionProfile.setOnClickListener { view ->
+            val popupMenu = PopupMenu(requireContext(), view)
+            popupMenu.menuInflater.inflate(R.menu.profile_menu, popupMenu.menu)
+            popupMenu.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.menu_profile -> {
+                        // Ação para "Perfil"
+                        true
+                    }
+                    R.id.menu_fechar -> {
+                        // Ação para "Fechar"
+                        true
+                    }
+                    R.id.menu_sair -> {
+                        // Ação para "Sair"
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popupMenu.show()
         }
 
         return root

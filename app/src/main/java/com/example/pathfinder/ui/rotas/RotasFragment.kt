@@ -12,9 +12,7 @@ import com.example.pathfinder.R
 import com.example.pathfinder.databinding.FragmentRotasBinding
 
 class RotasFragment : Fragment() {
-
     private var _binding: FragmentRotasBinding? = null
-
     private val binding get() = _binding!!
 
     override fun onCreateView(

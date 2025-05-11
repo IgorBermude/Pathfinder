@@ -4,9 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.bumptech.glide.Glide
 import com.example.pathfinder.R
 import com.example.pathfinder.data.models.Usuario
 import com.google.firebase.auth.FirebaseAuth
@@ -50,6 +52,12 @@ class ProfileFragment : Fragment() {
                             view.findViewById<TextView>(R.id.idade).text = formatDate(usuario.idadeUsuario)
                             view.findViewById<TextView>(R.id.nomeUsuario).text = usuario.nomeUsuario
                             view.findViewById<TextView>(R.id.endereco).text = usuario.enderecoUsuario?.toString() ?: "Não informado"
+                            val imageView = view.findViewById<ImageView>(R.id.imageView)
+                            usuario.fotoUsuario?.let {
+                                Glide.with(view.context)
+                                    .load(it)
+                                    .into(imageView)
+                            }
                         }
                     }
                 }

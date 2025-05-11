@@ -16,7 +16,8 @@ import com.example.pathfinder.R
 import com.example.pathfinder.databinding.ActivityMainBinding
 import com.example.pathfinder.ui.login.LoginFragment
 import com.google.firebase.auth.FirebaseAuth
-
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 
 class MainActivity : AppCompatActivity() {
 
@@ -46,11 +47,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         val navController = findNavController(R.id.nav_host_fragment_activity_main)
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            toggleActionBarForScreen(destination.id, destination.id == R.id.profileFragment)
+            toggleActionBarForScreen(destination.id, destination.id == R.id.navigation_home)
+        }
+
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         val appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.navigation_home, R.id.navigation_rotas, R.id.navigation_notifications
+                R.id.navigation_home, R.id.navigation_rotas, R.id.navigation_timeline
             )
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
@@ -63,6 +69,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun showMessage(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun toggleActionBarForScreen(destinationId: Int, hide: Boolean) {
+        if (hide) {
+            supportActionBar?.hide() // Esconde apenas o supportActionBar
+        } else {
+            supportActionBar?.show() // Mostra o supportActionBar
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -79,7 +93,6 @@ class MainActivity : AppCompatActivity() {
                 binding.navView.visibility = View.GONE // Esconde o BottomNavigationView*/
                 val navController = findNavController(R.id.nav_host_fragment_activity_main)
                 navController.navigate(R.id.profileFragment)
-                invalidateOptionsMenu()
                 true
             }
             R.id.menu_fechar -> {

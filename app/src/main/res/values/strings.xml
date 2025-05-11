@@ -31,4 +31,6 @@
     <string name="tv_text_login_screen">Bem vindo de volta</string>
     <string name="tv_text_sub_title">Sentimos sua falta</string>
     <string name="text_view_create_account">Não tem uma conta? Registre-se agora</string>
+    <string name="search_hint">Pesquisar locais</string>
+    <string name="search_icon_desc">Ícone de pesquisa</string>
 </resources>
