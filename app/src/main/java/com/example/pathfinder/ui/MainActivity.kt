@@ -18,6 +18,8 @@ import com.example.pathfinder.ui.login.LoginFragment
 import com.google.firebase.auth.FirebaseAuth
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
+import com.example.pathfinder.ui.rotas.RotaBottomSheetFragment
+import androidx.navigation.ui.NavigationUI
 
 class MainActivity : AppCompatActivity() {
 
@@ -59,8 +61,21 @@ class MainActivity : AppCompatActivity() {
                 R.id.navigation_home, R.id.navigation_rotas, R.id.navigation_timeline
             )
         )
+        
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+
+        navView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.navigation_rotas -> {
+                    RotaBottomSheetFragment().show(supportFragmentManager, "RotaBottomSheet")
+                    true
+                }
+                else -> {
+                    NavigationUI.onNavDestinationSelected(item, navController)
+                }
+            }
+        }
     }
 
     private fun isUserLoggedIn(): Boolean {

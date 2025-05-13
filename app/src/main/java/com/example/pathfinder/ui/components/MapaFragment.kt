@@ -15,8 +15,9 @@ import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.CameraState
 import com.mapbox.maps.MapView
 import com.mapbox.maps.Style
+import com.mapbox.maps.plugin.compass.compass
 import com.mapbox.maps.plugin.locationcomponent.location
-import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
+import com.mapbox.maps.plugin.scalebar.scalebar
 
 class MapaFragment : Fragment() {
 
@@ -47,6 +48,13 @@ class MapaFragment : Fragment() {
             enableUserLocation()
             restoreSavedCamera()
             setupCameraListener()
+
+            // Desativa a bússola
+            mapView.compass.enabled = false
+
+            // Desativa o medidor de distância
+            mapView.scalebar.enabled = false
+
         }
     }
 
@@ -80,8 +88,6 @@ class MapaFragment : Fragment() {
             saveCameraState(cameraState)
         }
     }
-
-
 
     private fun saveCameraState(cameraState: CameraState) {
         preferences.edit().apply {
