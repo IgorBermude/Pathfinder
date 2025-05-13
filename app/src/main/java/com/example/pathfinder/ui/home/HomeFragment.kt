@@ -1,17 +1,22 @@
 package com.example.pathfinder.ui.home
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
-import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import com.example.pathfinder.R
 import com.example.pathfinder.databinding.FragmentHomeBinding
+import com.example.pathfinder.ui.MainActivity
 import com.example.pathfinder.ui.components.MapaFragment
+import com.google.firebase.auth.FirebaseAuth
 
 class HomeFragment : Fragment() {
 
@@ -36,21 +41,38 @@ class HomeFragment : Fragment() {
             replace(R.id.map_container, MapaFragment())
         }
 
+        val navHostFragment =
+            requireActivity().supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_main) as NavHostFragment
+        val navController = navHostFragment.navController
+
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            toggleActionBarForScreen(destination.id == R.id.profileFragment)
+        }
+
+        binding.searchContainer.setOnClickListener {
+            val intent = Intent(requireContext(), SearchActivity::class.java)
+            startActivity(intent)
+            requireActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+        }
+
         binding.actionProfile.setOnClickListener { view ->
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.menuInflater.inflate(R.menu.profile_menu, popupMenu.menu)
             popupMenu.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.menu_profile -> {
-                        // Ação para "Perfil"
+                        findNavController().navigate(R.id.profileFragment)
                         true
                     }
                     R.id.menu_fechar -> {
-                        // Ação para "Fechar"
+                        requireActivity().finish()
                         true
                     }
                     R.id.menu_sair -> {
-                        // Ação para "Sair"
+                        FirebaseAuth.getInstance().signOut()
+                        val intent = Intent(requireContext(), MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
                         true
                     }
                     else -> false
@@ -60,6 +82,13 @@ class HomeFragment : Fragment() {
         }
 
         return root
+    }
+
+    private fun toggleActionBarForScreen(hide: Boolean) {
+        val actionBar = (requireActivity() as AppCompatActivity).supportActionBar
+        if (hide) {
+            actionBar?.hide()
+        }
     }
 
     override fun onDestroyView() {
