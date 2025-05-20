@@ -56,8 +56,6 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.fragment.ktx)
-    implementation("com.mapbox.maps:android:11.11.0")
-    implementation("com.mapbox.extension:maps-compose:11.11.0")
     implementation("androidx.activity:activity-compose:1.8.0")
     implementation("androidx.compose.ui:ui:1.5.4")
     implementation("androidx.compose.ui:ui-tooling:1.5.4")
@@ -79,6 +77,18 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation ("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
     implementation ("androidx.fragment:fragment-ktx:1.6.2")
+
+    // Mapbox SDK
+    implementation("com.mapbox.maps:android:11.12.1")
+    implementation("com.mapbox.extension:maps-compose:11.12.1")
+
+    implementation("com.mapbox.search:autofill:2.12.0-beta.1")
+    implementation("com.mapbox.search:discover:2.12.0-beta.1")
+    implementation("com.mapbox.search:place-autocomplete:2.12.0-beta.1")
+    implementation("com.mapbox.search:offline:2.12.0-beta.1")
+    implementation("com.mapbox.search:mapbox-search-android:2.12.0-beta.1")
+    implementation("com.mapbox.search:mapbox-search-android-ui:2.12.0-beta.1")
+
     implementation(libs.androidx.legacy.support.v4)
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.auth)

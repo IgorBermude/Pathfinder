@@ -23,6 +23,14 @@ class MapaFragment : Fragment() {
 
     private lateinit var mapView: MapView
 
+    private val permissionRequestCode = 1001
+    private val defaultCamera = CameraOptions.Builder()
+        .zoom(2.0)
+        .center(Point.fromLngLat(-98.0, 39.5))
+        .pitch(0.0)
+        .bearing(0.0)
+        .build()
+
     private val preferences by lazy {
         requireContext().getSharedPreferences("map_state", Context.MODE_PRIVATE)
     }
@@ -31,71 +39,80 @@ class MapaFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
+
         mapView = MapView(requireContext())
 
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1001)
+        if (hasLocationPermission()) {
+            initializeMap()
         } else {
-            initializeMapWithLocation()
+            requestLocationPermission()
         }
 
         return mapView
     }
 
-    private fun initializeMapWithLocation() {
+    private fun hasLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestLocationPermission() {
+        ActivityCompat.requestPermissions(
+            requireActivity(),
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+            permissionRequestCode
+        )
+    }
+
+    private fun initializeMap() {
         mapView.getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS) {
-            enableUserLocation()
-            restoreSavedCamera()
-            setupCameraListener()
-
-            // Desativa a bússola
+            enableLocationComponent()
+            restoreCameraState()
+            trackCameraChanges()
             mapView.compass.enabled = false
-
-            // Desativa o medidor de distância
             mapView.scalebar.enabled = false
-
         }
     }
 
-    private fun enableUserLocation() {
-        val locationComponentPlugin = mapView.location
-        locationComponentPlugin.updateSettings {
+    private fun enableLocationComponent() {
+        mapView.location.updateSettings {
             enabled = true
         }
     }
 
-    private fun restoreSavedCamera() {
-        val savedZoom = preferences.getFloat("zoom", 2.0f).toDouble()
-        val savedLat = preferences.getFloat("latitude", 39.5f).toDouble()
-        val savedLng = preferences.getFloat("longitude", -98.0f).toDouble()
-        val savedPitch = preferences.getFloat("pitch", 0.0f).toDouble()
-        val savedBearing = preferences.getFloat("bearing", 0.0f).toDouble()
+    private fun restoreCameraState() {
+        val zoom = preferences.getFloat("zoom", 2.0f).toDouble()
+        val lat = preferences.getFloat("latitude", 39.5f).toDouble()
+        val lng = preferences.getFloat("longitude", -98.0f).toDouble()
+        val pitch = preferences.getFloat("pitch", 0.0f).toDouble()
+        val bearing = preferences.getFloat("bearing", 0.0f).toDouble()
 
-        mapView.getMapboxMap().setCamera(
-            CameraOptions.Builder()
-                .zoom(savedZoom)
-                .center(Point.fromLngLat(savedLng, savedLat))
-                .pitch(savedPitch)
-                .bearing(savedBearing)
-                .build()
-        )
+        val camera = CameraOptions.Builder()
+            .zoom(zoom)
+            .center(Point.fromLngLat(lng, lat))
+            .pitch(pitch)
+            .bearing(bearing)
+            .build()
+
+        mapView.getMapboxMap().setCamera(camera)
     }
 
-    private fun setupCameraListener() {
+
+    private fun trackCameraChanges() {
         mapView.getMapboxMap().addOnCameraChangeListener {
-            val cameraState = mapView.getMapboxMap().cameraState
-            saveCameraState(cameraState)
+            saveCameraState(mapView.getMapboxMap().cameraState)
         }
     }
 
-    private fun saveCameraState(cameraState: CameraState) {
+    private fun saveCameraState(state: CameraState) {
         preferences.edit().apply {
-            putFloat("zoom", cameraState.zoom?.toFloat() ?: 2.0f)
-            putFloat("latitude", cameraState.center?.latitude()?.toFloat() ?: 39.5f)
-            putFloat("longitude", cameraState.center?.longitude()?.toFloat() ?: -98.0f)
-            putFloat("pitch", cameraState.pitch?.toFloat() ?: 0.0f)
-            putFloat("bearing", cameraState.bearing?.toFloat() ?: 0.0f)
+            putFloat("zoom", state.zoom.toFloat())
+            putFloat("latitude", state.center.latitude().toFloat())
+            putFloat("longitude", state.center.longitude().toFloat())
+            putFloat("pitch", state.pitch.toFloat())
+            putFloat("bearing", state.bearing.toFloat())
             apply()
         }
     }

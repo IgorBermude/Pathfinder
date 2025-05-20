@@ -14,10 +14,7 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.pathfinder.R
 import com.example.pathfinder.databinding.ActivityMainBinding
-import com.example.pathfinder.ui.login.LoginFragment
 import com.google.firebase.auth.FirebaseAuth
-import androidx.navigation.NavController
-import androidx.navigation.NavDestination
 import com.example.pathfinder.ui.rotas.RotaBottomSheetFragment
 import androidx.navigation.ui.NavigationUI
 
