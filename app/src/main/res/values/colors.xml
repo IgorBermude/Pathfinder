@@ -12,4 +12,5 @@
     <color name="verde_padrao">#00C897</color>
     <color name="verde_variante">#00936E</color>
     <color name="gray">#FF888888</color>
+    <color name="gray_light">#E1E1E1</color>
 </resources>

@@ -1,11 +1,13 @@
 package com.example.pathfinder.ui.home
 
 import android.content.Intent
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
@@ -49,7 +51,8 @@ class HomeFragment : Fragment() {
             toggleActionBarForScreen(destination.id == R.id.profileFragment)
         }
 
-        binding.searchContainer.setOnClickListener {
+        // Configurar o clique no search_container do layout incluído
+        binding.root.findViewById<View>(R.id.search_container).setOnClickListener {
             val intent = Intent(requireContext(), SearchActivity::class.java)
             startActivity(intent)
             requireActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
