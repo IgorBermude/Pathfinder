@@ -25,6 +25,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        window.decorView.systemUiVisibility =
+            window.decorView.systemUiVisibility or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -42,7 +47,7 @@ class MainActivity : AppCompatActivity() {
             navView.visibility = View.VISIBLE // Mostrar o BottomNavigationView
             val navController = findNavController(R.id.nav_host_fragment_activity_main)
             navController.navigate(R.id.navigation_home)
-            showMessage("Usuário está logado")
+            //showMessage("Usuário está logado")
         }
 
         val navController = findNavController(R.id.nav_host_fragment_activity_main)

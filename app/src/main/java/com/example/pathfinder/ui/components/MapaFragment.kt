@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -19,16 +20,26 @@ import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.CameraState
 import com.mapbox.maps.MapView
 import com.mapbox.maps.Style
+import com.mapbox.maps.extension.style.expressions.generated.Expression
+import com.mapbox.maps.extension.style.layers.addLayer
+import com.mapbox.maps.extension.style.layers.generated.lineLayer
+import com.mapbox.maps.extension.style.sources.addSource
+import com.mapbox.maps.extension.style.sources.generated.vectorSource
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import com.mapbox.maps.plugin.compass.compass
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.maps.plugin.scalebar.scalebar
+import androidx.core.graphics.toColorInt
+import com.mapbox.maps.extension.style.layers.addLayerBelow
 
 class MapaFragment : Fragment() {
 
     private lateinit var mapView: MapView
+    private val mapManager = MapManeger // Use o MapManager para gerenciar a instância do mapa
+    private var instance: MapaFragment? = null
+    private lateinit var mapMarkersManager: MapMarkersManager
 
     private val permissionRequestCode = 1001
     private val SEARCH_REQUEST_CODE = 1001
@@ -50,6 +61,7 @@ class MapaFragment : Fragment() {
     ): View {
 
         mapView = MapView(requireContext())
+        mapManager.initialize(mapView) // Inicialize o MapManager com o MapView
 
         if (hasLocationPermission()) {
             initializeMap()
@@ -79,7 +91,7 @@ class MapaFragment : Fragment() {
     }
 
     private fun markLocationOnMap(locationName: String?, latitude: Double, longitude: Double) {
-        mapView.getMapboxMap().setCamera(
+        mapManager.getMapView()?.getMapboxMap()?.setCamera(
             CameraOptions.Builder()
                 .center(Point.fromLngLat(longitude, latitude))
                 .zoom(14.0)
@@ -87,8 +99,8 @@ class MapaFragment : Fragment() {
         )
 
         // Adicionar um marcador no mapa
-        val annotationManager = mapView.annotations.createPointAnnotationManager()
-        annotationManager.create(
+        val annotationManager = mapManager.getMapView()?.annotations?.createPointAnnotationManager()
+        annotationManager?.create(
             PointAnnotationOptions()
                 .withPoint(Point.fromLngLat(longitude, latitude))
                 .withTextField(locationName ?: "Local")
@@ -110,17 +122,64 @@ class MapaFragment : Fragment() {
     }
 
     private fun initializeMap() {
-        mapView.getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS) {
+        mapManager.getMapView()?.getMapboxMap()?.loadStyleUri(Style.MAPBOX_STREETS) { style ->
+
+            // Adiciona a fonte do tileset de tráfego
+            style.addSource(
+                vectorSource("mapbox-traffic") {
+                    url("mapbox://mapbox.mapbox-traffic-v1")
+                }
+            )
+
+            // Adiciona a camada de tráfego
+            style.addLayerBelow(
+                lineLayer("traffic", "mapbox-traffic") {
+                    sourceLayer("traffic")
+                    lineWidth(2.5)
+                    lineColor(
+                        Expression.match(
+                            Expression.get("congestion"),
+                            Expression.literal("low"), Expression.color(Color.parseColor("#90EE90")),     // Verde
+                            Expression.literal("moderate"), Expression.color(Color.parseColor("#FFFF00")), // Amarelo
+                            Expression.literal("heavy"), Expression.color(Color.parseColor("#FFA500")),   // Laranja
+                            Expression.literal("severe"), Expression.color(Color.parseColor("#FF0000")),  // Vermelho
+                            Expression.color(Color.parseColor("#000000")) // Fallback: preto
+                        )
+                    )
+                },
+                "road-label" // Certifique-se de que a camada de tráfego fique abaixo das anotações
+            )
+
             enableLocationComponent()
             restoreCameraState()
             trackCameraChanges()
-            mapView.compass.enabled = false
-            mapView.scalebar.enabled = false
+            mapManager.getMapView()?.compass?.enabled = false
+            mapManager.getMapView()?.scalebar?.enabled = false
+
+            addTrafficPoints()
+        }
+    }
+
+    private fun addTrafficPoints() {
+        val annotationManager = mapManager.getMapView()?.annotations?.createPointAnnotationManager()
+
+        val trafficPoints = listOf(
+            Triple("Semáforo", -98.0, 39.5),
+            Triple("Radar", -98.2, 39.7),
+            Triple("Obra", -98.1, 39.6)
+        )
+
+        for ((label, lng, lat) in trafficPoints) {
+            annotationManager?.create(
+                PointAnnotationOptions()
+                    .withPoint(Point.fromLngLat(lng, lat))
+                    .withTextField(label)
+            )
         }
     }
 
     private fun enableLocationComponent() {
-        mapView.location.updateSettings {
+        mapManager.getMapView()?.location?.updateSettings {
             enabled = true
         }
     }
@@ -139,12 +198,12 @@ class MapaFragment : Fragment() {
             .bearing(bearing)
             .build()
 
-        mapView.getMapboxMap().setCamera(camera)
+        mapManager.getMapView()?.getMapboxMap()?.setCamera(camera)
     }
 
     private fun trackCameraChanges() {
-        mapView.getMapboxMap().addOnCameraChangeListener {
-            saveCameraState(mapView.getMapboxMap().cameraState)
+        mapManager.getMapView()?.getMapboxMap()?.addOnCameraChangeListener {
+            saveCameraState(mapManager.getMapView()?.getMapboxMap()?.cameraState!!)
         }
     }
 
@@ -157,5 +216,17 @@ class MapaFragment : Fragment() {
             putFloat("bearing", state.bearing.toFloat())
             apply()
         }
+    }
+
+    fun getInstance(): MapaFragment {
+        if (instance == null) {
+            instance = MapaFragment()
+        }
+        return instance!!
+    }
+
+    fun addMarker(latitude: Double, longitude: Double) {
+        val point = Point.fromLngLat(longitude, latitude)
+        mapMarkersManager.showMarker(point) // Adiciona o marcador no mapa
     }
 }

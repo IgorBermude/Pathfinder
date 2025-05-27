@@ -6,7 +6,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.PopupMenu
+import android.widget.SearchView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -27,6 +29,8 @@ class HomeFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
+    private lateinit var searchIcon: ImageView
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,8 +43,11 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
+        //Desativa o search_input
+        //root.findViewById<TextView>(R.id.search_input).isEnabled = false
+
         childFragmentManager.commit {
-            replace(R.id.map_container, MapaFragment())
+            replace(R.id.map_container, MapaFragment().getInstance())
         }
 
         val navHostFragment =
@@ -53,6 +60,12 @@ class HomeFragment : Fragment() {
 
         // Configurar o clique no search_container do layout incluído
         binding.root.findViewById<View>(R.id.search_container).setOnClickListener {
+            val intent = Intent(requireContext(), SearchActivity::class.java)
+            startActivity(intent)
+            requireActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+        }
+
+        binding.root.findViewById<View>(R.id.search_text).setOnClickListener {
             val intent = Intent(requireContext(), SearchActivity::class.java)
             startActivity(intent)
             requireActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
@@ -98,4 +111,5 @@ class HomeFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+
 }

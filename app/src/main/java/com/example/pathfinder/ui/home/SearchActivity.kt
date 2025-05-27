@@ -5,6 +5,7 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -19,65 +20,97 @@ import com.mapbox.search.result.SearchSuggestion
 import kotlinx.coroutines.launch
 import androidx.cardview.widget.CardView
 import android.widget.EditText
+import android.widget.TextView
+import com.mapbox.search.ApiType
+import com.mapbox.search.ResponseInfo
+import com.mapbox.search.SearchEngine
+import com.mapbox.search.SearchEngineSettings
+import com.mapbox.search.SearchOptions
+import com.mapbox.search.SearchSelectionCallback
+import com.mapbox.search.result.SearchResult
+import com.mapbox.search.ui.view.CommonSearchViewConfiguration
+import com.mapbox.search.ui.view.DistanceUnitType
+import com.mapbox.search.ui.view.SearchResultsView
 
 
 class SearchActivity : AppCompatActivity() {
     private lateinit var searchInput: EditText
     private lateinit var suggestionsRecyclerView: RecyclerView
     private lateinit var suggestionsAdapter: SuggestionsAdapter
-    private lateinit var searchBarLayout: CardView
     private lateinit var searchIcon: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
 
+        window.decorView.systemUiVisibility =
+            window.decorView.systemUiVisibility or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+
         supportActionBar?.hide()
 
-        searchBarLayout = findViewById(R.id.search_bar)
-        //searchBarLayout.setBackgroundColor(resources.getColor(R.color.gray_light))
-
-        searchIcon = findViewById(R.id.search_icon)
-        searchIcon.setImageResource(R.drawable.ic_arrow_back)
+        searchIcon = findViewById(R.id.back_icon)
 
         searchInput = findViewById(R.id.search_input)
-        suggestionsRecyclerView = findViewById(R.id.suggestions_recycler_view)
 
         // Configurar RecyclerView para exibir sugestões
         suggestionsAdapter = SuggestionsAdapter { suggestion ->
             handleSuggestionClick(suggestion)
         }
+
+        suggestionsRecyclerView = findViewById(R.id.suggestions_recycler_view)
         suggestionsRecyclerView.layoutManager = LinearLayoutManager(this)
         suggestionsRecyclerView.adapter = suggestionsAdapter
 
-        val placeAutocomplete = PlaceAutocomplete.create()
-
-        // Adicionar a pesquisa ao local
-        searchInput.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                // lógica aqui
-            }
-
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-
-        })
-    }
-
-    /*private fun performSearch(query: String, placeAutocomplete: PlaceAutocomplete) {
-        lifecycleScope.launch {
-            try {
-                val response = placeAutocomplete.suggestions(query)
-                response.onValue {
-                    suggestionsAdapter.submitList(it)
-                }.onError {
-                    Toast.makeText(this@SearchActivity, "Erro ao buscar sugestões", Toast.LENGTH_SHORT).show()
+        searchIcon.setOnClickListener {
+            searchIcon.animate()
+                .alpha(0.5f) // Reduz a opacidade para 50%
+                .setDuration(100) // Duração da animação de clique
+                .withEndAction {
+                    searchIcon.animate()
+                        .alpha(1f) // Restaura a opacidade para 100%
+                        .setDuration(100) // Duração da animação de retorno
+                        .start()
                 }
-            } catch (e: Exception) {
-                Toast.makeText(this@SearchActivity, "Erro ao buscar sugestões", Toast.LENGTH_SHORT).show()
-            }
+                .start()
+            onBackPressed()
         }
-    }*/
+
+        val searchEngine = SearchEngine.createSearchEngineWithBuiltInDataProviders(
+            apiType = ApiType.GEOCODING,
+            settings = SearchEngineSettings()
+        )
+
+        searchInput.addTextChangedListener(object : TextWatcher {
+            override fun onTextChanged(text: CharSequence, start: Int, before: Int, count: Int) {
+                // Quando o texto mudar, faça a busca
+                searchEngine.search(
+                    text.toString(),
+                    SearchOptions.Builder().limit(5).build(),
+                    object : SearchSelectionCallback {
+                        override fun onSuggestions(suggestions: List<SearchSuggestion>, responseInfo: ResponseInfo) {
+                            // Atualize o RecyclerView com as sugestões
+                            suggestionsAdapter.submitList(suggestions)
+                        }
+                        override fun onResult(suggestion: SearchSuggestion, result: SearchResult, info: ResponseInfo) {
+                            // Trate o resultado selecionado
+                        }
+                        override fun onResults(suggestion: SearchSuggestion, results: List<SearchResult>, responseInfo: ResponseInfo) {
+                            // Trate resultados de categoria
+                        }
+                        override fun onError(e: Exception) {
+                            System.out.println("Erro ao buscar: ${e.message}")
+                        }
+                    }
+                )
+            }
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun afterTextChanged(s: Editable) {}
+        })
+
+
+    }
 
     private fun handleSuggestionClick(suggestion: SearchSuggestion) {
         // Salvar a sugestão selecionada
@@ -102,4 +135,6 @@ class SearchActivity : AppCompatActivity() {
             apply()
         }
     }
+
+
 }
