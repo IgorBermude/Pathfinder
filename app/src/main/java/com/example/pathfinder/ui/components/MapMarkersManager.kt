@@ -1,18 +1,20 @@
 package com.example.pathfinder.ui.components
 
-import com.mapbox.android.gestures.Utils.dpToPx
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.EdgeInsets
 import com.mapbox.maps.MapView
 import com.mapbox.maps.plugin.annotation.annotations
-import com.mapbox.maps.plugin.annotation.generated.CircleAnnotationOptions
-import com.mapbox.maps.plugin.annotation.generated.createCircleAnnotationManager
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
+import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 
-class MapMarkersManager(mapView: MapView) {
+class MapMarkersManager(private val context: Context, private val mapView: MapView) {
 
     private val mapboxMap = mapView.mapboxMap
-    private val circleAnnotationManager = mapView.annotations.createCircleAnnotationManager(null)
+    private val pointAnnotationManager = mapView.annotations.createPointAnnotationManager()
     private val markers = mutableMapOf<String, Point>()
 
     var onMarkersChangeListener: (() -> Unit)? = null
@@ -22,29 +24,29 @@ class MapMarkersManager(mapView: MapView) {
 
     fun clearMarkers() {
         markers.clear()
-        circleAnnotationManager.deleteAll()
+        pointAnnotationManager.deleteAll()
     }
 
-    fun showMarker(coordinate: Point) {
-        showMarkers(listOf(coordinate))
+    fun showMarker(coordinate: Point, iconResId: Int) {
+        showMarkers(listOf(coordinate), iconResId)
     }
 
-    fun showMarkers(coordinates: List<Point>) {
+    fun showMarkers(coordinates: List<Point>, iconResId: Int) {
         clearMarkers()
         if (coordinates.isEmpty()) {
             onMarkersChangeListener?.invoke()
             return
         }
 
-        coordinates.forEach { coordinate ->
-            val circleAnnotationOptions: CircleAnnotationOptions = CircleAnnotationOptions()
-                .withPoint(coordinate)
-                .withCircleRadius(8.0)
-                .withCircleColor("#ee4e8b")
-                .withCircleStrokeWidth(2.0)
-                .withCircleStrokeColor("#ffffff")
+        // Obtenha o bitmap do recurso de imagem do ícone personalizado
+        val pinBitmap = bitmapFromDrawableRes(context, iconResId)
 
-            val annotation = circleAnnotationManager.create(circleAnnotationOptions)
+        // Para cada coordenada, crie um marcador com o ícone customizado
+        coordinates.forEach { coordinate ->
+            val pointAnnotationOptions = PointAnnotationOptions()
+                .withPoint(coordinate)
+                .withIconImage(pinBitmap)
+            val annotation = pointAnnotationManager.create(pointAnnotationOptions)
             markers[annotation.id] = coordinate
         }
 
@@ -72,10 +74,17 @@ class MapMarkersManager(mapView: MapView) {
         }
     }
 
+    private fun bitmapFromDrawableRes(context: Context, resId: Int): Bitmap {
+        val originalBitmap = BitmapFactory.decodeResource(context.resources, resId)
+        val width = 100 // Tamanho padrão de largura
+        val height = 100 // Tamanho padrão de altura
+        return Bitmap.createScaledBitmap(originalBitmap, width, height, true)
+    }
+
     private companion object {
 
-        val MARKERS_EDGE_OFFSET = dpToPx(64f).toDouble()
-        val PLACE_CARD_HEIGHT = dpToPx(300f).toDouble()
+        val MARKERS_EDGE_OFFSET = 64.0
+        val PLACE_CARD_HEIGHT = 300.0
 
         val MARKERS_INSETS = EdgeInsets(
             MARKERS_EDGE_OFFSET, MARKERS_EDGE_OFFSET, MARKERS_EDGE_OFFSET, MARKERS_EDGE_OFFSET
@@ -84,7 +93,5 @@ class MapMarkersManager(mapView: MapView) {
         val MARKERS_INSETS_OPEN_CARD = EdgeInsets(
             MARKERS_EDGE_OFFSET, MARKERS_EDGE_OFFSET, PLACE_CARD_HEIGHT, MARKERS_EDGE_OFFSET
         )
-
-        const val PERMISSIONS_REQUEST_LOCATION = 0
     }
 }

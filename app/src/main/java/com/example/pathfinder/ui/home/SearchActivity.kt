@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import androidx.cardview.widget.CardView
 import android.widget.EditText
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatEditText
 import com.mapbox.search.ApiType
 import com.mapbox.search.ResponseInfo
 import com.mapbox.search.SearchEngine
@@ -34,7 +35,7 @@ import com.mapbox.search.ui.view.SearchResultsView
 
 
 class SearchActivity : AppCompatActivity() {
-    private lateinit var searchInput: EditText
+    private lateinit var searchInput: AppCompatEditText
     private lateinit var suggestionsRecyclerView: RecyclerView
     private lateinit var suggestionsAdapter: SuggestionsAdapter
     private lateinit var searchIcon: ImageView
@@ -54,8 +55,14 @@ class SearchActivity : AppCompatActivity() {
 
         searchInput = findViewById(R.id.search_input)
 
+        searchInput.requestFocus()
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        imm.showSoftInput(searchInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+
+
         // Configurar RecyclerView para exibir sugestões
-        suggestionsAdapter = SuggestionsAdapter { suggestion ->
+        suggestionsAdapter = SuggestionsAdapter(this) { suggestion ->
+            // Adicione o contexto
             handleSuggestionClick(suggestion)
         }
 
@@ -108,8 +115,6 @@ class SearchActivity : AppCompatActivity() {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
             override fun afterTextChanged(s: Editable) {}
         })
-
-
     }
 
     private fun handleSuggestionClick(suggestion: SearchSuggestion) {
@@ -135,6 +140,4 @@ class SearchActivity : AppCompatActivity() {
             apply()
         }
     }
-
-
 }

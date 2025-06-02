@@ -1,5 +1,6 @@
 package com.example.pathfinder.ui.components
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import com.mapbox.maps.MapView
 import com.mapbox.search.result.SearchSuggestion
 
 class SuggestionsAdapter(
+    private val context: Context,
     private val onSuggestionClick: (SearchSuggestion) -> Unit
 ) : RecyclerView.Adapter<SuggestionsAdapter.SuggestionViewHolder>() {
 
@@ -19,12 +21,8 @@ class SuggestionsAdapter(
     private val mapManager = MapManeger
     private val mapView: MapView? = mapManager.getMapView()
 
-    private lateinit var mapMarkersManager: MapMarkersManager
-
-    init {
-        mapView?.let {
-            mapMarkersManager = MapMarkersManager(it) // Inicializa o MapMarkersManager quando o mapView está disponível
-        }
+    private val mapMarkersManager: MapMarkersManager? = mapView?.let {
+        MapMarkersManager(context, it) // Inicializa o MapMarkersManager quando o mapView está disponível
     }
 
     fun submitList(newSuggestions: List<SearchSuggestion>) {
@@ -44,11 +42,14 @@ class SuggestionsAdapter(
         holder.bind(suggestion)
         holder.itemView.setOnClickListener { 
             // Lógica para lidar com o clique na sugestão
-
-            // Não esta conseguindo passar a latitude e longitude para o MapMarkersManager
             suggestion.coordinate?.let { coordinate ->
-                mapMarkersManager.showMarker(Point.fromLngLat(coordinate.latitude(), coordinate.longitude()))
+                mapMarkersManager?.showMarker(
+                    Point.fromLngLat(coordinate.longitude(), coordinate.latitude()),
+                    R.drawable.location_pin // Ícone personalizado
+                )
+                System.out.println("Local marcado em: ${coordinate.latitude()}, ${coordinate.longitude()}")
             }
+            onSuggestionClick(suggestion)
         }
     }
 
@@ -62,7 +63,7 @@ class SuggestionsAdapter(
         fun bind(suggestion: SearchSuggestion) {
             cityName.text = suggestion.name
             cityRegion.text = suggestion.descriptionText ?: "Unknown Region"
-            cityDistance.text = String.format("%.1f km", suggestion.distanceMeters ?: 0.0)
+            cityDistance.text = suggestion.distanceMeters?.let { String.format("%.1f km", it / 1000) } ?: "Unknown Distance"
         }
     }
 }

@@ -9,30 +9,31 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.appcompat.app.AppCompatActivity
 import com.example.pathfinder.R
-import com.example.pathfinder.ui.home.SearchActivity
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.CameraState
 import com.mapbox.maps.MapView
 import com.mapbox.maps.Style
 import com.mapbox.maps.extension.style.expressions.generated.Expression
-import com.mapbox.maps.extension.style.layers.addLayer
+import com.mapbox.maps.extension.style.layers.addLayerBelow
 import com.mapbox.maps.extension.style.layers.generated.lineLayer
 import com.mapbox.maps.extension.style.sources.addSource
 import com.mapbox.maps.extension.style.sources.generated.vectorSource
+import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import com.mapbox.maps.plugin.compass.compass
+import com.mapbox.maps.plugin.gestures.gestures
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.maps.plugin.scalebar.scalebar
-import androidx.core.graphics.toColorInt
-import com.mapbox.maps.extension.style.layers.addLayerBelow
 
 class MapaFragment : Fragment() {
 
@@ -122,34 +123,7 @@ class MapaFragment : Fragment() {
     }
 
     private fun initializeMap() {
-        mapManager.getMapView()?.getMapboxMap()?.loadStyleUri(Style.MAPBOX_STREETS) { style ->
-
-            // Adiciona a fonte do tileset de tráfego
-            style.addSource(
-                vectorSource("mapbox-traffic") {
-                    url("mapbox://mapbox.mapbox-traffic-v1")
-                }
-            )
-
-            // Adiciona a camada de tráfego
-            style.addLayerBelow(
-                lineLayer("traffic", "mapbox-traffic") {
-                    sourceLayer("traffic")
-                    lineWidth(2.5)
-                    lineColor(
-                        Expression.match(
-                            Expression.get("congestion"),
-                            Expression.literal("low"), Expression.color(Color.parseColor("#90EE90")),     // Verde
-                            Expression.literal("moderate"), Expression.color(Color.parseColor("#FFFF00")), // Amarelo
-                            Expression.literal("heavy"), Expression.color(Color.parseColor("#FFA500")),   // Laranja
-                            Expression.literal("severe"), Expression.color(Color.parseColor("#FF0000")),  // Vermelho
-                            Expression.color(Color.parseColor("#000000")) // Fallback: preto
-                        )
-                    )
-                },
-                "road-label" // Certifique-se de que a camada de tráfego fique abaixo das anotações
-            )
-
+        mapManager.getMapView()?.getMapboxMap()?.loadStyleUri(Style.STANDARD_EXPERIMENTAL) { style ->
             enableLocationComponent()
             restoreCameraState()
             trackCameraChanges()
@@ -227,6 +201,32 @@ class MapaFragment : Fragment() {
 
     fun addMarker(latitude: Double, longitude: Double) {
         val point = Point.fromLngLat(longitude, latitude)
-        mapMarkersManager.showMarker(point) // Adiciona o marcador no mapa
+        mapMarkersManager.showMarker(point, R.drawable.location_pin) // Adiciona o marcador no mapa
     }
+
+    fun centralizeUserLocation() {
+        val oneTimeListener = OnIndicatorPositionChangedListener { point ->
+            val cameraOptions = CameraOptions.Builder()
+                .center(point)
+                .zoom(15.0)
+                .build()
+            mapView.mapboxMap.flyTo(cameraOptions)
+        }
+        mapView.location.addOnIndicatorPositionChangedListener(oneTimeListener)
+        mapView.location.removeOnIndicatorPositionChangedListener(oneTimeListener)
+    }
+
+    fun setupMapMoveListener(targetIcon: ImageView) {
+        mapView.gestures.addOnMoveListener(
+            object : com.mapbox.maps.plugin.gestures.OnMoveListener {
+                override fun onMoveBegin(detector: com.mapbox.android.gestures.MoveGestureDetector) {
+                    targetIcon.setImageResource(R.drawable.target)
+                    targetIcon.setColorFilter(requireContext().getColor(R.color.black))
+                }
+                override fun onMove(detector: com.mapbox.android.gestures.MoveGestureDetector): Boolean = false
+                override fun onMoveEnd(detector: com.mapbox.android.gestures.MoveGestureDetector) {}
+            }
+        )
+    }
+
 }

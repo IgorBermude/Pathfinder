@@ -89,6 +89,10 @@ dependencies {
     implementation("com.mapbox.search:mapbox-search-android:2.12.0-beta.1")
     implementation("com.mapbox.search:mapbox-search-android-ui:2.12.0-beta.1")
 
+    implementation("com.mapbox.navigationcore:android:3.9.2")
+    implementation("com.mapbox.navigationcore:ui-components:3.9.2")
+    implementation("com.mapbox.navigationcore:android-auto-components:3.9.2")
+
     implementation(libs.androidx.legacy.support.v4)
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.auth)

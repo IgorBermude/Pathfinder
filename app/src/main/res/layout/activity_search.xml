@@ -13,8 +13,6 @@
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginTop="35dp"
-        app:cardCornerRadius="30dp"
-        app:cardElevation="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -36,6 +34,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:paddingVertical="8dp"
+            android:layout_marginTop="5dp"
             android:gravity="center_vertical">
 
             <ImageView
@@ -60,6 +59,17 @@
                 android:layout_height="wrap_content" />
         </LinearLayout>
     </LinearLayout>
+
+    <!-- Linha divisória -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="13dp"
+        android:layout_marginEnd="13dp"
+        android:background="@color/gray"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/location_list" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/suggestions_recycler_view"

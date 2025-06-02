@@ -19,8 +19,16 @@ import androidx.navigation.fragment.findNavController
 import com.example.pathfinder.R
 import com.example.pathfinder.databinding.FragmentHomeBinding
 import com.example.pathfinder.ui.MainActivity
+import com.example.pathfinder.ui.components.MapaBottomSheetFragment
 import com.example.pathfinder.ui.components.MapaFragment
 import com.google.firebase.auth.FirebaseAuth
+import com.mapbox.maps.plugin.gestures.gestures
+import com.mapbox.search.ResponseInfo
+import com.mapbox.search.result.SearchResult
+import com.mapbox.search.ui.view.CommonSearchViewConfiguration
+import com.mapbox.search.ui.view.DistanceUnitType
+import com.mapbox.search.ui.view.place.SearchPlace
+import com.mapbox.search.ui.view.place.SearchPlaceBottomSheetView
 
 class HomeFragment : Fragment() {
 
@@ -29,8 +37,8 @@ class HomeFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-    private lateinit var searchIcon: ImageView
-
+    private lateinit var targetIcon: ImageView
+    private lateinit var searchPlaceView: SearchPlaceBottomSheetView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -42,6 +50,10 @@ class HomeFragment : Fragment() {
 
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
+
+        targetIcon = binding.root.findViewById(R.id.ac_target)
+        searchPlaceView = binding.root.findViewById(R.id.search_place_view)
+        searchPlaceView.initialize(CommonSearchViewConfiguration(DistanceUnitType.IMPERIAL))
 
         //Desativa o search_input
         //root.findViewById<TextView>(R.id.search_input).isEnabled = false
@@ -97,6 +109,32 @@ class HomeFragment : Fragment() {
             popupMenu.show()
         }
 
+        binding.root.findViewById<View>(R.id.ac_target).setOnClickListener {
+            // Dentralize a localização do usuario no mapa
+            targetIcon.setImageResource(R.drawable.target_variation)
+            targetIcon.setColorFilter(getResources().getColor(R.color.blue, null))
+
+            val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as MapaFragment
+            mapaFragment.centralizeUserLocation()
+            mapaFragment.setupMapMoveListener(targetIcon)
+        }
+
+        binding.root.findViewById<View>(R.id.map_type_button).setOnClickListener {
+            MapaBottomSheetFragment().show(parentFragmentManager, "RotaBottomSheet")
+        }
+
+        searchPlaceView.addOnCloseClickListener {
+            searchPlaceView.hide()
+        }
+
+        /*searchPlaceView.addOnNavigateClickListener { searchPlace ->
+            //startActivity(createGeoIntent(searchPlace.coordinate))
+        }
+
+        searchPlaceView.addOnShareClickListener { searchPlace ->
+            //startActivity(createShareIntent(searchPlace))
+        }*/
+
         return root
     }
 
@@ -110,6 +148,11 @@ class HomeFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    fun onSearchResultSelected(searchResult: SearchResult, responseInfo: ResponseInfo) {
+        val searchPlace = SearchPlace.createFromSearchResult(searchResult, responseInfo)
+        searchPlaceView.open(searchPlace)
     }
 
 }
