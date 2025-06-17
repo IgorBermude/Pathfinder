@@ -28,6 +28,7 @@ import com.mapbox.search.SearchEngine
 import com.mapbox.search.SearchEngineSettings
 import com.mapbox.search.SearchOptions
 import com.mapbox.search.SearchSelectionCallback
+import com.mapbox.search.common.IsoCountryCode
 import com.mapbox.search.result.SearchResult
 import com.mapbox.search.ui.view.CommonSearchViewConfiguration
 import com.mapbox.search.ui.view.DistanceUnitType
@@ -39,6 +40,7 @@ class SearchActivity : AppCompatActivity() {
     private lateinit var suggestionsRecyclerView: RecyclerView
     private lateinit var suggestionsAdapter: SuggestionsAdapter
     private lateinit var searchIcon: ImageView
+    private lateinit var searchEngine: SearchEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,11 +61,48 @@ class SearchActivity : AppCompatActivity() {
         val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
         imm.showSoftInput(searchInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
 
+        searchEngine = SearchEngine.createSearchEngineWithBuiltInDataProviders(
+            apiType = ApiType.GEOCODING,
+            settings = SearchEngineSettings()
+        )
 
         // Configurar RecyclerView para exibir sugestões
         suggestionsAdapter = SuggestionsAdapter(this) { suggestion ->
-            // Adicione o contexto
-            handleSuggestionClick(suggestion)
+            // Ao clicar, busque o SearchResult e ResponseInfo e retorne para o HomeFragment
+            searchEngine.select(suggestion, object : SearchSelectionCallback {
+                override fun onSuggestions(
+                    suggestions: List<SearchSuggestion>,
+                    responseInfo: ResponseInfo
+                ) {
+                    // Não utilizado aqui
+                }
+
+                override fun onResult(
+                    suggestion: SearchSuggestion,
+                    result: SearchResult,
+                    info: ResponseInfo
+                ) {
+                    saveLastSearchedLocation(suggestion)
+                    val resultIntent = Intent().apply {
+                        putExtra("search_result", result)
+                        putExtra("response_info", info)
+                    }
+                    setResult(RESULT_OK, resultIntent)
+                    finish()
+                }
+
+                override fun onResults(
+                    suggestion: SearchSuggestion,
+                    results: List<SearchResult>,
+                    responseInfo: ResponseInfo
+                ) {
+                    // Não utilizado aqui
+                }
+
+                override fun onError(e: Exception) {
+                    Toast.makeText(this@SearchActivity, "Erro ao buscar resultado", Toast.LENGTH_SHORT).show()
+                }
+            })
         }
 
         suggestionsRecyclerView = findViewById(R.id.suggestions_recycler_view)
@@ -84,24 +123,31 @@ class SearchActivity : AppCompatActivity() {
             onBackPressed()
         }
 
-        val searchEngine = SearchEngine.createSearchEngineWithBuiltInDataProviders(
-            apiType = ApiType.GEOCODING,
-            settings = SearchEngineSettings()
-        )
-
         searchInput.addTextChangedListener(object : TextWatcher {
             override fun onTextChanged(text: CharSequence, start: Int, before: Int, count: Int) {
                 // Quando o texto mudar, faça a busca
                 searchEngine.search(
                     text.toString(),
-                    SearchOptions.Builder().limit(5).build(),
+                    SearchOptions.Builder()
+                        .limit(5)
+                        .countries(listOf(IsoCountryCode.BRAZIL))
+                        .build(),
                     object : SearchSelectionCallback {
                         override fun onSuggestions(suggestions: List<SearchSuggestion>, responseInfo: ResponseInfo) {
                             // Atualize o RecyclerView com as sugestões
                             suggestionsAdapter.submitList(suggestions)
                         }
                         override fun onResult(suggestion: SearchSuggestion, result: SearchResult, info: ResponseInfo) {
-                            // Trate o resultado selecionado
+                            // Retornar o resultado selecionado para o HomeFragment
+                            val resultIntent = Intent().apply {
+                                putExtra("location_name", suggestion.name)
+                                putExtra("latitude", suggestion.coordinate?.latitude())
+                                putExtra("longitude", suggestion.coordinate?.longitude())
+                                putExtra("search_result", result)
+                                putExtra("response_info", info)
+                            }
+                            setResult(RESULT_OK, resultIntent)
+                            finish()
                         }
                         override fun onResults(suggestion: SearchSuggestion, results: List<SearchResult>, responseInfo: ResponseInfo) {
                             // Trate resultados de categoria
@@ -115,20 +161,6 @@ class SearchActivity : AppCompatActivity() {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
             override fun afterTextChanged(s: Editable) {}
         })
-    }
-
-    private fun handleSuggestionClick(suggestion: SearchSuggestion) {
-        // Salvar a sugestão selecionada
-        saveLastSearchedLocation(suggestion)
-
-        // Retornar a localização para o mapa
-        val resultIntent = Intent().apply {
-            putExtra("location_name", suggestion.name)
-            putExtra("latitude", suggestion.coordinate?.latitude())
-            putExtra("longitude", suggestion.coordinate?.longitude())
-        }
-        setResult(RESULT_OK, resultIntent)
-        finish()
     }
 
     private fun saveLastSearchedLocation(suggestion: SearchSuggestion) {

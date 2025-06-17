@@ -10,11 +10,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.pathfinder.R
+import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.CameraState
@@ -34,6 +36,30 @@ import com.mapbox.maps.plugin.gestures.gestures
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.maps.plugin.scalebar.scalebar
+import com.mapbox.navigation.base.extensions.applyDefaultNavigationOptions
+import com.mapbox.navigation.base.extensions.applyLanguageAndVoiceUnitOptions
+import com.mapbox.navigation.core.MapboxNavigation
+import com.mapbox.navigation.core.lifecycle.requireMapboxNavigation
+import com.mapbox.navigation.core.lifecycle.MapboxNavigationObserver
+import com.mapbox.navigation.base.route.NavigationRoute
+import com.mapbox.navigation.base.route.NavigationRouterCallback
+import com.mapbox.navigation.base.route.RouterFailure
+import com.mapbox.navigation.core.directions.session.RoutesObserver
+import com.mapbox.navigation.ui.maps.route.line.api.MapboxRouteLineApi
+import com.mapbox.navigation.ui.maps.route.line.api.MapboxRouteLineView
+import com.mapbox.navigation.ui.maps.route.line.model.NavigationRouteLine
+import com.mapbox.navigation.ui.maps.route.line.model.MapboxRouteLineViewOptions
+import com.mapbox.navigation.ui.maps.route.line.model.MapboxRouteLineApiOptions
+import com.mapbox.navigation.ui.maps.route.line.model.RouteLineColorResources
+import com.mapbox.navigation.ui.maps.location.NavigationLocationProvider
+import com.mapbox.common.location.LocationService
+import com.mapbox.common.location.LocationServiceFactory
+import com.mapbox.common.location.DeviceLocationProvider
+import com.mapbox.common.location.toAndroidLocation
+import com.mapbox.navigation.core.trip.session.LocationObserver
+import com.mapbox.navigation.core.trip.session.LocationMatcherResult
+import com.mapbox.common.location.Location
+import com.mapbox.maps.plugin.LocationPuck2D
 
 class MapaFragment : Fragment() {
 
@@ -41,18 +67,66 @@ class MapaFragment : Fragment() {
     private val mapManager = MapManeger // Use o MapManager para gerenciar a instância do mapa
     private var instance: MapaFragment? = null
     private lateinit var mapMarkersManager: MapMarkersManager
-
     private val permissionRequestCode = 1001
     private val SEARCH_REQUEST_CODE = 1001
-    private val defaultCamera = CameraOptions.Builder()
+    /*private val defaultCamera = CameraOptions.Builder()
         .zoom(2.0)
         .center(Point.fromLngLat(-98.0, 39.5))
         .pitch(0.0)
         .bearing(0.0)
-        .build()
-
+        .build()*/
     private val preferences by lazy {
         requireContext().getSharedPreferences("map_state", Context.MODE_PRIVATE)
+    }
+    // Navigation UI helpers
+    private val navigationLocationProvider = NavigationLocationProvider()
+    private lateinit var routeLineApi: MapboxRouteLineApi
+    private lateinit var routeLineView: MapboxRouteLineView
+    private val locationObserver =
+        object : LocationObserver {
+            override fun onNewRawLocation(rawLocation: Location) {}
+
+            override fun onNewLocationMatcherResult(locationMatcherResult: LocationMatcherResult) {
+                val enhancedLocation = locationMatcherResult.enhancedLocation
+                // update location puck's position on the map
+                navigationLocationProvider.changePosition(
+                    location = enhancedLocation,
+                    keyPoints = locationMatcherResult.keyPoints,
+                )
+                println("Localização: ${enhancedLocation?.latitude}, ${enhancedLocation?.longitude}")
+            }
+        }
+    // Delegate para o MapboxNavigation conforme recomendado
+    private val mapboxNavigation: MapboxNavigation by requireMapboxNavigation(
+        onResumedObserver = object : MapboxNavigationObserver {
+            @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
+            override fun onAttached(mapboxNavigation: MapboxNavigation) {
+                mapboxNavigation.registerRoutesObserver(routesObserver)
+                mapboxNavigation.registerLocationObserver(locationObserver)
+                mapboxNavigation.startTripSession()
+            }
+            override fun onDetached(mapboxNavigation: MapboxNavigation) {
+                mapboxNavigation.unregisterRoutesObserver(routesObserver)
+                mapboxNavigation.unregisterLocationObserver(locationObserver)
+            }
+        }
+    )
+    private val routesObserver = RoutesObserver { routeUpdateResult ->
+        if (routeUpdateResult.navigationRoutes.isNotEmpty()) {
+            val routeLines = routeUpdateResult.navigationRoutes.map { NavigationRouteLine(it, null) }
+            routeLineApi.setNavigationRouteLines(routeLines) { value ->
+                mapView.getMapboxMap().getStyle()?.let { style ->
+                    routeLineView.renderRouteDrawData(style, value)
+                }
+            }
+        } else {
+            // Limpa as rotas do mapa se não houver rotas
+            routeLineApi.clearRouteLine { value ->
+                mapView.getMapboxMap().getStyle()?.let { style ->
+                    routeLineView.renderClearRouteLineValue(style, value)
+                }
+            }
+        }
     }
 
     override fun onCreateView(
@@ -63,6 +137,18 @@ class MapaFragment : Fragment() {
 
         mapView = MapView(requireContext())
         mapManager.initialize(mapView) // Inicialize o MapManager com o MapView
+
+        // Inicialize o mapMarkersManager após o mapView estar disponível
+        mapMarkersManager = MapMarkersManager(requireContext(), mapView)
+
+        // Inicialize RouteLineApi e RouteLineView
+        val routeLineViewOptions = MapboxRouteLineViewOptions.Builder(requireContext())
+            .routeLineColorResources(RouteLineColorResources.Builder().build())
+            .routeLineBelowLayerId("road-label-navigation")
+            .build()
+        val routeLineApiOptions = MapboxRouteLineApiOptions.Builder().build()
+        routeLineView = MapboxRouteLineView(routeLineViewOptions)
+        routeLineApi = MapboxRouteLineApi(routeLineApiOptions)
 
         if (hasLocationPermission()) {
             initializeMap()
@@ -124,6 +210,11 @@ class MapaFragment : Fragment() {
 
     private fun initializeMap() {
         mapManager.getMapView()?.getMapboxMap()?.loadStyleUri(Style.STANDARD_EXPERIMENTAL) { style ->
+            // Associe o LocationProvider do MapView ao navigationLocationProvider
+            mapView.location.apply {
+                setLocationProvider(navigationLocationProvider)
+                enabled = true
+            }
             enableLocationComponent()
             restoreCameraState()
             trackCameraChanges()
@@ -137,7 +228,7 @@ class MapaFragment : Fragment() {
     private fun addTrafficPoints() {
         val annotationManager = mapManager.getMapView()?.annotations?.createPointAnnotationManager()
 
-        val trafficPoints = listOf(
+        /*val trafficPoints = listOf(
             Triple("Semáforo", -98.0, 39.5),
             Triple("Radar", -98.2, 39.7),
             Triple("Obra", -98.1, 39.6)
@@ -149,7 +240,7 @@ class MapaFragment : Fragment() {
                     .withPoint(Point.fromLngLat(lng, lat))
                     .withTextField(label)
             )
-        }
+        }*/
     }
 
     private fun enableLocationComponent() {
@@ -204,6 +295,10 @@ class MapaFragment : Fragment() {
         mapMarkersManager.showMarker(point, R.drawable.location_pin) // Adiciona o marcador no mapa
     }
 
+    fun removeLastMarker() {
+        mapMarkersManager.removeLastMarker() // Remove o último marcador adicionado
+    }
+
     fun centralizeUserLocation() {
         val oneTimeListener = OnIndicatorPositionChangedListener { point ->
             val cameraOptions = CameraOptions.Builder()
@@ -225,6 +320,55 @@ class MapaFragment : Fragment() {
                 }
                 override fun onMove(detector: com.mapbox.android.gestures.MoveGestureDetector): Boolean = false
                 override fun onMoveEnd(detector: com.mapbox.android.gestures.MoveGestureDetector) {}
+            }
+        )
+    }
+
+    fun getMapMarkersManager(): MapMarkersManager = mapMarkersManager
+
+    fun getUserLocation(callback: (android.location.Location?) -> Unit) {
+        val tempLocationObserver = object : com.mapbox.navigation.core.trip.session.LocationObserver {
+            override fun onNewRawLocation(rawLocation: Location) {
+                // Não utilizado aqui
+            }
+
+            override fun onNewLocationMatcherResult(locationMatcherResult: LocationMatcherResult) {
+                // Converte de com.mapbox.common.location.Location para android.location.Location
+                val androidLocation = locationMatcherResult.enhancedLocation?.toAndroidLocation()
+                callback(androidLocation)
+                mapboxNavigation.unregisterLocationObserver(this)
+            }
+        }
+        mapboxNavigation.registerLocationObserver(tempLocationObserver)
+    }
+
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        routeLineApi.cancel()
+        routeLineView.cancel()
+    }
+
+    fun requestRoutes(origin: Point, destination: Point) {
+        val routeOptions = RouteOptions.builder()
+            .applyDefaultNavigationOptions()
+            .applyLanguageAndVoiceUnitOptions(requireContext())
+            .coordinatesList(listOf(origin, destination))
+            .alternatives(false)
+            .build()
+
+        mapboxNavigation.requestRoutes(
+            routeOptions,
+            object : NavigationRouterCallback {
+                override fun onRoutesReady(
+                    routes: List<NavigationRoute>,
+                    routerOrigin: String // Corrigido para String
+                ) {
+                    mapboxNavigation.setNavigationRoutes(routes)
+                    // Aqui a rota será desenhada no mapa automaticamente se você estiver usando os componentes de UI do Navigation SDK
+                }
+                override fun onCanceled(routeOptions: RouteOptions, routerOrigin: String) {}
+                override fun onFailure(reasons: List<RouterFailure>, routeOptions: RouteOptions) {}
             }
         )
     }

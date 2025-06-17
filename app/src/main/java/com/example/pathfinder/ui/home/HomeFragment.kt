@@ -1,5 +1,7 @@
 package com.example.pathfinder.ui.home
 
+import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
@@ -10,6 +12,7 @@ import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.SearchView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
@@ -22,7 +25,11 @@ import com.example.pathfinder.ui.MainActivity
 import com.example.pathfinder.ui.components.MapaBottomSheetFragment
 import com.example.pathfinder.ui.components.MapaFragment
 import com.google.firebase.auth.FirebaseAuth
-import com.mapbox.maps.plugin.gestures.gestures
+import com.mapbox.api.directions.v5.models.RouteOptions
+import com.mapbox.geojson.Point
+import com.mapbox.navigation.base.extensions.applyDefaultNavigationOptions
+import com.mapbox.navigation.base.extensions.applyLanguageAndVoiceUnitOptions
+import com.mapbox.navigation.base.options.NavigationOptions
 import com.mapbox.search.ResponseInfo
 import com.mapbox.search.result.SearchResult
 import com.mapbox.search.ui.view.CommonSearchViewConfiguration
@@ -31,6 +38,10 @@ import com.mapbox.search.ui.view.place.SearchPlace
 import com.mapbox.search.ui.view.place.SearchPlaceBottomSheetView
 
 class HomeFragment : Fragment() {
+
+    companion object {
+        private const val REQUEST_CODE_SEARCH = 1001
+    }
 
     private var _binding: FragmentHomeBinding? = null
 
@@ -54,7 +65,6 @@ class HomeFragment : Fragment() {
         targetIcon = binding.root.findViewById(R.id.ac_target)
         searchPlaceView = binding.root.findViewById(R.id.search_place_view)
         searchPlaceView.initialize(CommonSearchViewConfiguration(DistanceUnitType.IMPERIAL))
-
         //Desativa o search_input
         //root.findViewById<TextView>(R.id.search_input).isEnabled = false
 
@@ -73,13 +83,13 @@ class HomeFragment : Fragment() {
         // Configurar o clique no search_container do layout incluído
         binding.root.findViewById<View>(R.id.search_container).setOnClickListener {
             val intent = Intent(requireContext(), SearchActivity::class.java)
-            startActivity(intent)
+            startActivityForResult(intent, REQUEST_CODE_SEARCH)
             requireActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
 
         binding.root.findViewById<View>(R.id.search_text).setOnClickListener {
             val intent = Intent(requireContext(), SearchActivity::class.java)
-            startActivity(intent)
+            startActivityForResult(intent, REQUEST_CODE_SEARCH)
             requireActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
 
@@ -124,16 +134,34 @@ class HomeFragment : Fragment() {
         }
 
         searchPlaceView.addOnCloseClickListener {
-            searchPlaceView.hide()
+            val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
+            mapaFragment?.removeLastMarker()
+            fecharSearchPlaceView()
         }
 
-        /*searchPlaceView.addOnNavigateClickListener { searchPlace ->
-            //startActivity(createGeoIntent(searchPlace.coordinate))
+        searchPlaceView.addOnNavigateClickListener { searchPlace ->
+            val destination = searchPlace.coordinate
+            val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
+
+            mapaFragment?.getUserLocation { location ->
+                if (location != null) {
+                    val origin = Point.fromLngLat(location.longitude, location.latitude)
+                    mapaFragment.requestRoutes(origin, destination)
+                    Toast.makeText(requireContext(), "Rota solicitada: $origin", Toast.LENGTH_SHORT).show()
+                    fecharSearchPlaceView()
+
+                } else {
+                    Toast.makeText(requireContext(), "Localização do usuário não disponível", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            // startActivity(createGeoIntent(searchPlace.coordinate))
         }
+
 
         searchPlaceView.addOnShareClickListener { searchPlace ->
             //startActivity(createShareIntent(searchPlace))
-        }*/
+        }
 
         return root
     }
@@ -150,9 +178,49 @@ class HomeFragment : Fragment() {
         _binding = null
     }
 
-    fun onSearchResultSelected(searchResult: SearchResult, responseInfo: ResponseInfo) {
+    private fun onSearchResultSelected(searchResult: SearchResult, responseInfo: ResponseInfo) {
         val searchPlace = SearchPlace.createFromSearchResult(searchResult, responseInfo)
         searchPlaceView.open(searchPlace)
+
+        // Adiciona o marcador no mapa
+        val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
+        val coordinate = searchResult.coordinate
+        if (mapaFragment != null && coordinate != null) {
+            mapaFragment.addMarker(coordinate.latitude(), coordinate.longitude())
+        }
+
+        // Esconde o BottomNavigationView com animação
+        val navView = requireActivity().findViewById<View>(R.id.nav_view)
+        navView?.animate()
+            ?.translationY(navView.height.toFloat())
+            ?.alpha(0f)
+            ?.setDuration(250)
+            ?.withEndAction { navView.visibility = View.GONE }
+            ?.start()
     }
 
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE_SEARCH && resultCode == Activity.RESULT_OK && data != null) {
+            val searchResult = data.getParcelableExtra<SearchResult>("search_result")
+            val responseInfo = data.getParcelableExtra<ResponseInfo>("response_info")
+            if (searchResult != null && responseInfo != null) {
+                onSearchResultSelected(searchResult, responseInfo)
+            }
+        }
+    }
+
+    private fun fecharSearchPlaceView() {
+        searchPlaceView.hide()
+        val navView = requireActivity().findViewById<View>(R.id.nav_view)
+        navView?.apply {
+            visibility = View.VISIBLE
+            animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setDuration(250)
+                .start()
+        }
+    }
 }

@@ -17,6 +17,8 @@ import com.example.pathfinder.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.example.pathfinder.ui.rotas.RotaBottomSheetFragment
 import androidx.navigation.ui.NavigationUI
+import com.mapbox.navigation.base.options.NavigationOptions
+import com.mapbox.navigation.core.lifecycle.MapboxNavigationApp
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,6 +34,14 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Inicialize o MapboxNavigationApp se ainda não estiver inicializado
+        if (!MapboxNavigationApp.isSetup()) {
+            MapboxNavigationApp.setup {
+                NavigationOptions.Builder(this)
+                    .build()
+            }
+        }
 
         val navView: BottomNavigationView = binding.navView
 

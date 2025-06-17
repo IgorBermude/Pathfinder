@@ -8,6 +8,7 @@ import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.EdgeInsets
 import com.mapbox.maps.MapView
 import com.mapbox.maps.plugin.annotation.annotations
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotation
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 
@@ -15,7 +16,7 @@ class MapMarkersManager(private val context: Context, private val mapView: MapVi
 
     private val mapboxMap = mapView.mapboxMap
     private val pointAnnotationManager = mapView.annotations.createPointAnnotationManager()
-    private val markers = mutableMapOf<String, Point>()
+    private val markers = mutableListOf<PointAnnotation>()
 
     var onMarkersChangeListener: (() -> Unit)? = null
 
@@ -25,6 +26,15 @@ class MapMarkersManager(private val context: Context, private val mapView: MapVi
     fun clearMarkers() {
         markers.clear()
         pointAnnotationManager.deleteAll()
+    }
+
+    fun removeLastMarker() {
+        System.out.println(markers.size)
+        if (markers.isNotEmpty()) {
+            val lastMarker = markers.removeAt(markers.size - 1)
+            pointAnnotationManager.delete(lastMarker)
+            onMarkersChangeListener?.invoke()
+        }
     }
 
     fun showMarker(coordinate: Point, iconResId: Int) {
@@ -47,7 +57,7 @@ class MapMarkersManager(private val context: Context, private val mapView: MapVi
                 .withPoint(coordinate)
                 .withIconImage(pinBitmap)
             val annotation = pointAnnotationManager.create(pointAnnotationOptions)
-            markers[annotation.id] = coordinate
+            markers.add(annotation)
         }
 
         val onOptionsReadyCallback: (CameraOptions) -> Unit = {

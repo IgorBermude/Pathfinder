@@ -54,7 +54,7 @@
         app:layout_constraintTop_toBottomOf="@+id/action_profile"
         app:maxImageSize="30dp"
         app:fabSize="mini"
-        app:backgroundTint="@color/white" />/>
+        app:backgroundTint="@color/white" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/ac_target"
@@ -74,14 +74,14 @@
         android:id="@+id/coordinator_layout_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        >
+        android:elevation="16dp">
 
         <com.mapbox.search.ui.view.place.SearchPlaceBottomSheetView
             android:id="@+id/search_place_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:elevation="8dp"
+            android:elevation="16dp"
             />
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
