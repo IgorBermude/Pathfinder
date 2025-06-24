@@ -22,7 +22,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.home.SearchActivity" />
+        <activity android:name=".ui.searchAc.SearchActivity" />
 
         <!-- metadata if your app supports Android Auto -->
         <meta-data

@@ -46,7 +46,7 @@ class SuggestionsAdapter(
         fun bind(suggestion: SearchSuggestion) {
             cityName.text = suggestion.name
             cityRegion.text = suggestion.fullAddress
-            cityDistance.text = suggestion.distanceMeters?.let { String.format("%.1f km", it / 1000) } ?: "Unknown Distance"
+            cityDistance.text = suggestion.distanceMeters?.let { String.format("%.1f km", it / 1000) } ?: "Distancia desconhecida"
         }
     }
 }

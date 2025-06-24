@@ -1,17 +1,13 @@
 package com.example.pathfinder.ui.home
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.PopupMenu
-import android.widget.SearchView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -24,12 +20,9 @@ import com.example.pathfinder.databinding.FragmentHomeBinding
 import com.example.pathfinder.ui.MainActivity
 import com.example.pathfinder.ui.components.MapaBottomSheetFragment
 import com.example.pathfinder.ui.components.MapaFragment
+import com.example.pathfinder.ui.searchAc.SearchActivity
 import com.google.firebase.auth.FirebaseAuth
-import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.geojson.Point
-import com.mapbox.navigation.base.extensions.applyDefaultNavigationOptions
-import com.mapbox.navigation.base.extensions.applyLanguageAndVoiceUnitOptions
-import com.mapbox.navigation.base.options.NavigationOptions
 import com.mapbox.search.ResponseInfo
 import com.mapbox.search.result.SearchResult
 import com.mapbox.search.ui.view.CommonSearchViewConfiguration
@@ -146,10 +139,14 @@ class HomeFragment : Fragment() {
             mapaFragment?.getUserLocation { location ->
                 if (location != null) {
                     val origin = Point.fromLngLat(location.longitude, location.latitude)
-                    mapaFragment.requestRoutes(origin, destination)
-                    Toast.makeText(requireContext(), "Rota solicitada: $origin", Toast.LENGTH_SHORT).show()
-                    fecharSearchPlaceView()
-
+                    // Solicita a rota e centraliza ao receber a resposta
+                    mapaFragment.requestRoutes(origin, destination) { routeCoordinates ->
+                        Toast.makeText(requireContext(), "Rota solicitada: $origin", Toast.LENGTH_SHORT).show()
+                        fecharSearchPlaceView()
+                        if (routeCoordinates.isNotEmpty()) {
+                            mapaFragment.centralizeRoute(routeCoordinates)
+                        }
+                    }
                 } else {
                     Toast.makeText(requireContext(), "Localização do usuário não disponível", Toast.LENGTH_SHORT).show()
                 }

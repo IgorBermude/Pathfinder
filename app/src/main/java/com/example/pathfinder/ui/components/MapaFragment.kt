@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.pathfinder.R
 import com.mapbox.api.directions.v5.models.RouteOptions
+import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.CameraState
@@ -59,7 +60,10 @@ import com.mapbox.common.location.toAndroidLocation
 import com.mapbox.navigation.core.trip.session.LocationObserver
 import com.mapbox.navigation.core.trip.session.LocationMatcherResult
 import com.mapbox.common.location.Location
+import com.mapbox.maps.EdgeInsets
 import com.mapbox.maps.plugin.LocationPuck2D
+import com.mapbox.maps.plugin.animation.MapAnimationOptions
+import com.mapbox.maps.plugin.animation.camera
 
 class MapaFragment : Fragment() {
 
@@ -311,6 +315,44 @@ class MapaFragment : Fragment() {
         mapView.location.removeOnIndicatorPositionChangedListener(oneTimeListener)
     }
 
+    fun centralizeRoute(origin: Point, destination: Point) {
+        val cameraOptions = CameraOptions.Builder()
+            .center(Point.fromLngLat((origin.longitude() + destination.longitude()) / 2, (origin.latitude() + destination.latitude()) / 2))
+            .zoom(10.0)
+            .padding(EdgeInsets(100.0, 100.0, 100.0, 100.0)) // Adiciona padding
+            .build()
+        mapView.mapboxMap.flyTo(cameraOptions)
+    }
+
+    fun centralizeRoute(routeCoordinates: List<Point>) {
+        // Verificar se há coordenadas suficientes
+        if (routeCoordinates.isEmpty()) return
+
+        // Definir padding para dar margem ao redor da rota
+        val padding = EdgeInsets(
+            120.0, // top
+            40.0,  // left
+            120.0, // bottom
+            40.0   // right
+        )
+
+        // Calcular a câmera que enquadra todas as coordenadas da rota
+        val cameraOptions = mapView.mapboxMap.cameraForCoordinates(
+            coordinates = routeCoordinates,
+            coordinatesPadding = padding,
+            bearing = null,  // Manter o norte para cima (ou definir um valor específico)
+            pitch = null     // Manter a visualização plana (ou definir um ângulo)
+        )
+
+        // Animar a transição da câmera com opções personalizadas
+        val animationOptions = MapAnimationOptions.Builder()
+            .duration(1500L)  // Duração da animação em milissegundos
+            .build()
+
+        // Aplicar a animação
+        mapView.camera.flyTo(cameraOptions, animationOptions)
+    }
+
     fun setupMapMoveListener(targetIcon: ImageView) {
         mapView.gestures.addOnMoveListener(
             object : com.mapbox.maps.plugin.gestures.OnMoveListener {
@@ -349,7 +391,7 @@ class MapaFragment : Fragment() {
         routeLineView.cancel()
     }
 
-    fun requestRoutes(origin: Point, destination: Point) {
+    fun requestRoutes(origin: Point, destination: Point, onRouteReady: (List<Point>) -> Unit) {
         val routeOptions = RouteOptions.builder()
             .applyDefaultNavigationOptions()
             .applyLanguageAndVoiceUnitOptions(requireContext())
@@ -362,10 +404,16 @@ class MapaFragment : Fragment() {
             object : NavigationRouterCallback {
                 override fun onRoutesReady(
                     routes: List<NavigationRoute>,
-                    routerOrigin: String // Corrigido para String
+                    routerOrigin: String
                 ) {
                     mapboxNavigation.setNavigationRoutes(routes)
-                    // Aqui a rota será desenhada no mapa automaticamente se você estiver usando os componentes de UI do Navigation SDK
+                    // Extrai as coordenadas da primeira rota para centralizar
+                    val routeCoordinates = routes.firstOrNull()
+                        ?.directionsRoute
+                        ?.geometry()
+                        ?.let { LineString.fromPolyline(it, 6).coordinates() }
+                        ?: emptyList()
+                    onRouteReady(routeCoordinates)
                 }
                 override fun onCanceled(routeOptions: RouteOptions, routerOrigin: String) {}
                 override fun onFailure(reasons: List<RouterFailure>, routeOptions: RouteOptions) {}
