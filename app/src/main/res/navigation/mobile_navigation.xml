@@ -48,11 +48,6 @@
 
     </fragment>
     <fragment
-        android:id="@+id/navigation_rotas"
-        android:name="com.example.pathfinder.ui.rotas.RotasFragment"
-        android:label="fragment_rotas"
-        tools:layout="@layout/fragment_rotas" />
-    <fragment
         android:id="@+id/navigation_timeline"
         android:name="com.example.pathfinder.ui.timeline.TimelineFragment"
         android:label="fragment_timeline"

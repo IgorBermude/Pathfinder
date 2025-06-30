@@ -12,10 +12,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.example.pathfinder.R
+import com.example.pathfinder.data.models.Rota
 import com.example.pathfinder.databinding.FragmentHomeBinding
 import com.example.pathfinder.ui.MainActivity
 import com.example.pathfinder.ui.components.MapaBottomSheetFragment
@@ -29,6 +31,7 @@ import com.mapbox.search.ui.view.CommonSearchViewConfiguration
 import com.mapbox.search.ui.view.DistanceUnitType
 import com.mapbox.search.ui.view.place.SearchPlace
 import com.mapbox.search.ui.view.place.SearchPlaceBottomSheetView
+import java.util.Date
 
 class HomeFragment : Fragment() {
 
@@ -43,6 +46,7 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var targetIcon: ImageView
     private lateinit var searchPlaceView: SearchPlaceBottomSheetView
+    private val homeViewModel: HomeViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -115,7 +119,7 @@ class HomeFragment : Fragment() {
         binding.root.findViewById<View>(R.id.ac_target).setOnClickListener {
             // Dentralize a localização do usuario no mapa
             targetIcon.setImageResource(R.drawable.target_variation)
-            targetIcon.setColorFilter(getResources().getColor(R.color.blue, null))
+            targetIcon.setColorFilter(resources.getColor(R.color.blue, null))
 
             val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as MapaFragment
             mapaFragment.centralizeUserLocation()
@@ -139,10 +143,18 @@ class HomeFragment : Fragment() {
             mapaFragment?.getUserLocation { location ->
                 if (location != null) {
                     val origin = Point.fromLngLat(location.longitude, location.latitude)
+                    val rotaAtual = obterUltimaRota()
+                    if (rotaAtual != null && rotaAtual.origemRota == origin) {
+                        adicionarDestinoARotaExistente(rotaAtual, destination)
+                    } else {
+                        criarNovaRota(origin, destination, searchPlace.name)
+                    }
+
                     // Solicita a rota e centraliza ao receber a resposta
                     mapaFragment.requestRoutes(origin, destination) { routeCoordinates ->
                         Toast.makeText(requireContext(), "Rota solicitada: $origin", Toast.LENGTH_SHORT).show()
                         fecharSearchPlaceView()
+                        mapaFragment.removeLastMarker()
                         if (routeCoordinates.isNotEmpty()) {
                             mapaFragment.centralizeRoute(routeCoordinates)
                         }
@@ -151,7 +163,6 @@ class HomeFragment : Fragment() {
                     Toast.makeText(requireContext(), "Localização do usuário não disponível", Toast.LENGTH_SHORT).show()
                 }
             }
-
             // startActivity(createGeoIntent(searchPlace.coordinate))
         }
 
@@ -219,5 +230,34 @@ class HomeFragment : Fragment() {
                 .setDuration(250)
                 .start()
         }
+    }
+
+    // Obtém a última rota existente, se houver
+    private fun obterUltimaRota(): Rota? {
+        val rotasAtuais = homeViewModel.rotas.value ?: emptyList()
+        return rotasAtuais.lastOrNull()
+    }
+
+    // Cria uma nova rota com origem e primeiro destino
+    private fun criarNovaRota(origin: Point, destination: Point, nomeRota: String?) {
+        val novaRota = Rota(
+            origemRota = origin,
+            destinosRota = listOf(destination),
+            criadorRota = null, // Preencha com o usuário logado se necessário
+            distanciaRota = null,
+            tempoTotalRota = null,
+            dtModificacaoRota = Date(),
+            nomeRota = nomeRota
+        )
+        homeViewModel.adicionarRota(novaRota)
+    }
+
+    // Retorna uma nova rota com o destino adicionado à lista de destinos
+    private fun adicionarDestinoARotaExistente(rota: Rota, destination: Point){
+        val novaRota = rota.copy(
+            destinosRota = rota.destinosRota + destination,
+            dtModificacaoRota = Date(),
+        )
+        homeViewModel.atualizarUltimaRota(novaRota)
     }
 }
