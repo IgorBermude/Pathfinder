@@ -116,8 +116,8 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.menu_profile -> {
-                /*supportActionBar?.hide()
-                binding.navView.visibility = View.GONE // Esconde o BottomNavigationView*/
+                supportActionBar?.hide()
+                binding.navView.visibility = View.GONE // Esconde o BottomNavigationView
                 val navController = findNavController(R.id.nav_host_fragment_activity_main)
                 navController.navigate(R.id.profileFragment)
                 true

@@ -3,28 +3,38 @@ package com.example.pathfinder.ui.home
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.pathfinder.R
+import com.example.pathfinder.data.models.Destino
 import com.example.pathfinder.data.models.Rota
 import com.example.pathfinder.databinding.FragmentHomeBinding
 import com.example.pathfinder.ui.MainActivity
+import com.example.pathfinder.ui.components.DestinoAdapter
 import com.example.pathfinder.ui.components.MapaBottomSheetFragment
 import com.example.pathfinder.ui.components.MapaFragment
 import com.example.pathfinder.ui.searchAc.SearchActivity
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.auth.FirebaseAuth
+import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.geojson.Point
+import com.mapbox.navigation.base.extensions.applyDefaultNavigationOptions
 import com.mapbox.search.ResponseInfo
 import com.mapbox.search.result.SearchResult
 import com.mapbox.search.ui.view.CommonSearchViewConfiguration
@@ -47,15 +57,14 @@ class HomeFragment : Fragment() {
     private lateinit var targetIcon: ImageView
     private lateinit var searchPlaceView: SearchPlaceBottomSheetView
     private val homeViewModel: HomeViewModel by activityViewModels()
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<LinearLayout>
+    private lateinit var destinoAdapter: DestinoAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val homeViewModel =
-            ViewModelProvider(this).get(HomeViewModel::class.java)
-
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
@@ -64,6 +73,18 @@ class HomeFragment : Fragment() {
         searchPlaceView.initialize(CommonSearchViewConfiguration(DistanceUnitType.IMPERIAL))
         //Desativa o search_input
         //root.findViewById<TextView>(R.id.search_input).isEnabled = false
+
+        val bottomSheet = binding.root.findViewById<LinearLayout>(R.id.bottom_sheet_destinos)
+        val recyclerView = binding.root.findViewById<RecyclerView>(R.id.recycler_destinos)
+        bottomSheetBehavior = bottomSheet?.let { BottomSheetBehavior.from(it) }!!
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+
+        // Configura RecyclerView
+        destinoAdapter = DestinoAdapter(emptyList()) { destino ->
+            removerDestinoDaRota(destino)
+        }
+        recyclerView?.adapter = destinoAdapter
+        recyclerView?.layoutManager = LinearLayoutManager(requireContext())
 
         childFragmentManager.commit {
             replace(R.id.map_container, MapaFragment().getInstance())
@@ -137,33 +158,41 @@ class HomeFragment : Fragment() {
         }
 
         searchPlaceView.addOnNavigateClickListener { searchPlace ->
-            val destination = searchPlace.coordinate
+            val destination = Destino(
+                nome = searchPlace.name ?: "Destino",
+                ponto = searchPlace.coordinate,
+                distancia = null // Preencha se necessário
+            )
             val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
 
             mapaFragment?.getUserLocation { location ->
                 if (location != null) {
                     val origin = Point.fromLngLat(location.longitude, location.latitude)
                     val rotaAtual = obterUltimaRota()
-                    if (rotaAtual != null && rotaAtual.origemRota == origin) {
+
+                    // Verifica se já existe uma rota atual e atualiza ou salva o objeto rota
+                    if (rotaAtual != null) {
                         adicionarDestinoARotaExistente(rotaAtual, destination)
                     } else {
                         criarNovaRota(origin, destination, searchPlace.name)
                     }
 
-                    // Solicita a rota e centraliza ao receber a resposta
-                    mapaFragment.requestRoutes(origin, destination) { routeCoordinates ->
+                    // Solicita as rotas com a origem e os destinos
+                    val destinos = if (rotaAtual != null) {
+                        rotaAtual.destinosRota + destination
+                    } else {
+                        listOf(destination)
+                    }
+                    mapaFragment.requestRoutes(origin, destinos) { destinosAtualizados ->
                         Toast.makeText(requireContext(), "Rota solicitada: $origin", Toast.LENGTH_SHORT).show()
                         fecharSearchPlaceView()
                         mapaFragment.removeLastMarker()
-                        if (routeCoordinates.isNotEmpty()) {
-                            mapaFragment.centralizeRoute(routeCoordinates)
-                        }
+                        //mapaFragment.centralizeRoute(destinosAtualizados)
                     }
                 } else {
                     Toast.makeText(requireContext(), "Localização do usuário não disponível", Toast.LENGTH_SHORT).show()
                 }
             }
-            // startActivity(createGeoIntent(searchPlace.coordinate))
         }
 
 
@@ -190,6 +219,8 @@ class HomeFragment : Fragment() {
         val searchPlace = SearchPlace.createFromSearchResult(searchResult, responseInfo)
         searchPlaceView.open(searchPlace)
 
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+
         // Adiciona o marcador no mapa
         val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
         val coordinate = searchResult.coordinate
@@ -197,7 +228,10 @@ class HomeFragment : Fragment() {
             mapaFragment.addMarker(coordinate.latitude(), coordinate.longitude())
         }
 
-        // Esconde o BottomNavigationView com animação
+        esconderBottomNavigationView()
+    }
+
+    private fun esconderBottomNavigationView(){
         val navView = requireActivity().findViewById<View>(R.id.nav_view)
         navView?.animate()
             ?.translationY(navView.height.toFloat())
@@ -239,7 +273,7 @@ class HomeFragment : Fragment() {
     }
 
     // Cria uma nova rota com origem e primeiro destino
-    private fun criarNovaRota(origin: Point, destination: Point, nomeRota: String?) {
+    private fun criarNovaRota(origin: Point, destination: Destino, nomeRota: String?) {
         val novaRota = Rota(
             origemRota = origin,
             destinosRota = listOf(destination),
@@ -250,14 +284,64 @@ class HomeFragment : Fragment() {
             nomeRota = nomeRota
         )
         homeViewModel.adicionarRota(novaRota)
+        showDestinos(novaRota.destinosRota) // Atualiza a UI após criar nova rota
     }
 
     // Retorna uma nova rota com o destino adicionado à lista de destinos
-    private fun adicionarDestinoARotaExistente(rota: Rota, destination: Point){
+    private fun adicionarDestinoARotaExistente(rota: Rota, destination: Destino){
         val novaRota = rota.copy(
             destinosRota = rota.destinosRota + destination,
             dtModificacaoRota = Date(),
         )
         homeViewModel.atualizarUltimaRota(novaRota)
+        showDestinos(novaRota.destinosRota) // Atualiza a UI após adicionar destino
+    }
+
+    private fun showDestinos(destinos: List<Destino>) {
+        destinoAdapter.update(destinos)
+        val bottomSheet = requireView().findViewById<LinearLayout>(R.id.bottom_sheet_destinos)
+        val navView = requireActivity().findViewById<View>(R.id.nav_view)
+        val acTarget = requireView().findViewById<View>(R.id.ac_target)
+
+        if (destinos.isEmpty()) {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            navView?.visibility = View.VISIBLE
+            // Volta ac_target para posição original
+            acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                bottomMargin = dpToPx(120)
+            }
+        } else {
+            // Ajusta a altura do BottomSheet para 35% da tela
+            val displayMetrics = resources.displayMetrics
+            val targetHeight = (displayMetrics.heightPixels * 0.35).toInt()
+            bottomSheet.layoutParams.height = targetHeight
+            bottomSheet.requestLayout()
+
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            navView?.visibility = View.GONE
+            // Sobe o ac_target junto com o BottomSheet
+            acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                bottomMargin = targetHeight + dpToPx(16)
+            }
+        }
+    }
+
+    private fun dpToPx(dp: Int): Int {
+        return TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, dp.toFloat(), resources.displayMetrics
+        ).toInt()
+    }
+
+    private fun removerDestinoDaRota(destino: Destino) {
+        val rotaAtual = obterUltimaRota()
+        if (rotaAtual != null) {
+            val novaLista = rotaAtual.destinosRota.filter { it != destino }
+            val novaRota = rotaAtual.copy(
+                destinosRota = novaLista,
+                dtModificacaoRota = Date()
+            )
+            homeViewModel.atualizarUltimaRota(novaRota)
+            showDestinos(novaLista)
+        }
     }
 }

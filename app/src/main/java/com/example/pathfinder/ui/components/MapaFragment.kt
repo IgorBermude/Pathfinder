@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -16,6 +15,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.pathfinder.R
+import com.example.pathfinder.data.models.Destino
 import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
@@ -23,11 +23,6 @@ import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.CameraState
 import com.mapbox.maps.MapView
 import com.mapbox.maps.Style
-import com.mapbox.maps.extension.style.expressions.generated.Expression
-import com.mapbox.maps.extension.style.layers.addLayerBelow
-import com.mapbox.maps.extension.style.layers.generated.lineLayer
-import com.mapbox.maps.extension.style.sources.addSource
-import com.mapbox.maps.extension.style.sources.generated.vectorSource
 import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
@@ -53,15 +48,11 @@ import com.mapbox.navigation.ui.maps.route.line.model.MapboxRouteLineViewOptions
 import com.mapbox.navigation.ui.maps.route.line.model.MapboxRouteLineApiOptions
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLineColorResources
 import com.mapbox.navigation.ui.maps.location.NavigationLocationProvider
-import com.mapbox.common.location.LocationService
-import com.mapbox.common.location.LocationServiceFactory
-import com.mapbox.common.location.DeviceLocationProvider
 import com.mapbox.common.location.toAndroidLocation
 import com.mapbox.navigation.core.trip.session.LocationObserver
 import com.mapbox.navigation.core.trip.session.LocationMatcherResult
 import com.mapbox.common.location.Location
 import com.mapbox.maps.EdgeInsets
-import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.animation.MapAnimationOptions
 import com.mapbox.maps.plugin.animation.camera
 
@@ -315,18 +306,13 @@ class MapaFragment : Fragment() {
         mapView.location.removeOnIndicatorPositionChangedListener(oneTimeListener)
     }
 
-    fun centralizeRoute(origin: Point, destination: Point) {
-        val cameraOptions = CameraOptions.Builder()
-            .center(Point.fromLngLat((origin.longitude() + destination.longitude()) / 2, (origin.latitude() + destination.latitude()) / 2))
-            .zoom(10.0)
-            .padding(EdgeInsets(100.0, 100.0, 100.0, 100.0)) // Adiciona padding
-            .build()
-        mapView.mapboxMap.flyTo(cameraOptions)
-    }
+    // Refazer a centralização da rota
+    fun centralizeRoute(routeDestinos: List<Destino>) {
+        // Verificar se há destinos suficientes
+        if (routeDestinos.isEmpty()) return
 
-    fun centralizeRoute(routeCoordinates: List<Point>) {
-        // Verificar se há coordenadas suficientes
-        if (routeCoordinates.isEmpty()) return
+        // Extrai os Points dos Destinos
+        val coordinates = routeDestinos.map { it.ponto }
 
         // Definir padding para dar margem ao redor da rota
         val padding = EdgeInsets(
@@ -338,10 +324,8 @@ class MapaFragment : Fragment() {
 
         // Calcular a câmera que enquadra todas as coordenadas da rota
         val cameraOptions = mapView.mapboxMap.cameraForCoordinates(
-            coordinates = routeCoordinates,
+            coordinates = coordinates,
             coordinatesPadding = padding,
-            bearing = null,  // Manter o norte para cima (ou definir um valor específico)
-            pitch = null     // Manter a visualização plana (ou definir um ângulo)
         )
 
         // Animar a transição da câmera com opções personalizadas
@@ -391,11 +375,18 @@ class MapaFragment : Fragment() {
         routeLineView.cancel()
     }
 
-    fun requestRoutes(origin: Point, destination: Point, onRouteReady: (List<Point>) -> Unit) {
+    fun requestRoutes(
+        origin: Point,
+        destinos: List<Destino>,
+        onRouteReady: (List<Destino>) -> Unit
+    ) {
+        // A lista começa pelo origin e segue com todos os destinos (convertendo para Point)
+        val points = listOf(origin) + destinos.map { it.ponto }
+
         val routeOptions = RouteOptions.builder()
             .applyDefaultNavigationOptions()
             .applyLanguageAndVoiceUnitOptions(requireContext())
-            .coordinatesList(listOf(origin, destination))
+            .coordinatesList(points)
             .alternatives(false)
             .build()
 
@@ -407,13 +398,16 @@ class MapaFragment : Fragment() {
                     routerOrigin: String
                 ) {
                     mapboxNavigation.setNavigationRoutes(routes)
-                    // Extrai as coordenadas da primeira rota para centralizar
                     val routeCoordinates = routes.firstOrNull()
                         ?.directionsRoute
                         ?.geometry()
                         ?.let { LineString.fromPolyline(it, 6).coordinates() }
                         ?: emptyList()
-                    onRouteReady(routeCoordinates)
+                    // Mapeia os Points retornados para Destinos (mantendo nome e distância se possível)
+                    val destinosAtualizados = destinos.mapIndexed { idx, destino ->
+                        if (idx < routeCoordinates.size) destino.copy(ponto = routeCoordinates[idx]) else destino
+                    }
+                    onRouteReady(destinosAtualizados)
                 }
                 override fun onCanceled(routeOptions: RouteOptions, routerOrigin: String) {}
                 override fun onFailure(reasons: List<RouterFailure>, routeOptions: RouteOptions) {}

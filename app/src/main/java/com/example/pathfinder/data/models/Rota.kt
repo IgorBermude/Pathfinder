@@ -8,7 +8,7 @@ data class Rota(
     @DocumentId
     var idRota: String? = null,
     var origemRota: Point? = null,
-    var destinosRota: List<Point> = emptyList(),
+    var destinosRota: List<Destino> = emptyList(),
     var criadorRota: Usuario? = null,
     var distanciaRota: Float? = 0f,
     var tempoTotalRota: String? = "00:00:00",
