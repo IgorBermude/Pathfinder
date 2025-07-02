@@ -73,23 +73,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom" />
 
-    <!-- BottomSheet de destinos (dinâmico) -->
-    <LinearLayout
-        android:id="@+id/bottom_sheet_destinos"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp"
-        android:background="@drawable/bg_bottom_sheet_rounded"
-        android:visibility="visible"
-        android:elevation="10dp"
-        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
-        app:behavior_hideable="true">
+    <!-- Inclua o BottomSheet de destinos -->
+    <include
+        layout="@layout/bottom_sheet_destinos"
+        android:id="@+id/bottom_sheet_destinos"/>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_destinos"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"/>
-    </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
