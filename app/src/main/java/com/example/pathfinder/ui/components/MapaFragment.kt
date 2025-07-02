@@ -415,4 +415,13 @@ class MapaFragment : Fragment() {
         )
     }
 
+    fun clearRoutes() {
+        mapboxNavigation.setNavigationRoutes(emptyList())
+        routeLineApi.clearRouteLine { value ->
+            mapView.getMapboxMap().getStyle()?.let { style ->
+                routeLineView.renderClearRouteLineValue(style, value)
+            }
+        }
+    }
+
 }
