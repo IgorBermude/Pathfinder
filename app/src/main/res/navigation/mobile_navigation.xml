@@ -57,4 +57,10 @@
         android:name="com.example.pathfinder.ui.profile.ProfileFragment"
         android:label="fragment_profile"
         tools:layout="@layout/fragment_profile" />
+
+    <fragment
+        android:id="@+id/navigation_routes"
+        android:name="com.example.pathfinder.ui.route.RouteFragment"
+        android:label="fragment_routes"
+        tools:layout="@layout/fragment_route" />
 </navigation>

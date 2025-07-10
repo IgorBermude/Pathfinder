@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity() {
         // menu should be considered as top level destinations.
         val appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.navigation_home, R.id.navigation_rotas, R.id.navigation_timeline
+                R.id.navigation_home, R.id.navigation_routes, R.id.navigation_timeline
             )
         )
         
@@ -79,7 +79,7 @@ class MainActivity : AppCompatActivity() {
 
         navView.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.navigation_rotas -> {
+                R.id.navigation_routes -> {
                     RotaBottomSheetFragment().show(supportFragmentManager, "RotaBottomSheet")
                     true
                 }

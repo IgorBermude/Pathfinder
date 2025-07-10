@@ -53,6 +53,7 @@ import com.mapbox.navigation.core.trip.session.LocationObserver
 import com.mapbox.navigation.core.trip.session.LocationMatcherResult
 import com.mapbox.common.location.Location
 import com.mapbox.maps.EdgeInsets
+import com.mapbox.maps.MapboxDelicateApi
 import com.mapbox.maps.plugin.animation.MapAnimationOptions
 import com.mapbox.maps.plugin.animation.camera
 
@@ -423,5 +424,28 @@ class MapaFragment : Fragment() {
             }
         }
     }
+
+    @OptIn(MapboxDelicateApi::class)
+    fun updateCamera(originPoint: Point, destinationPoint: Point) {
+        val mapAnimationOptions = MapAnimationOptions.Builder().duration(1500L).build()
+        val overviewOption = mapView.mapboxMap.cameraForCoordinates(
+            listOf(
+                originPoint,
+                destinationPoint
+            ),
+            CameraOptions.Builder()
+                .padding(EdgeInsets(100.0, 100.0, 100.0, 100.0))
+                .build(),
+            null,
+            null,
+            null,
+        )
+
+        mapView.camera.easeTo(
+            overviewOption,
+            mapAnimationOptions
+        )
+    }
+
 
 }

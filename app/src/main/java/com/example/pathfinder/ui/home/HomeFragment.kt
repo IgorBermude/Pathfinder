@@ -30,6 +30,7 @@ import com.example.pathfinder.ui.components.DestinoAdapter
 import com.example.pathfinder.ui.components.MapaBottomSheetFragment
 import com.example.pathfinder.ui.components.MapaFragment
 import com.example.pathfinder.ui.searchAc.SearchActivity
+import com.example.pathfinder.util.NavigationViewUtils
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.auth.FirebaseAuth
 import com.mapbox.api.directions.v5.models.RouteOptions
@@ -72,24 +73,61 @@ class HomeFragment : Fragment() {
         val bottomSheet = binding.root.findViewById<LinearLayout>(R.id.bottom_sheet_destinos)
         val recyclerView = binding.root.findViewById<RecyclerView>(R.id.recycler_destinos)
         bottomSheetBehavior = bottomSheet?.let { BottomSheetBehavior.from(it) }!!
+
+        // Definindo os três estados: escondido, colapsado (peek), expandido
+        val displayMetrics = resources.displayMetrics
+        val navViewHeight = dpToPx(56) // Altura padrão do BottomNavigationView
+        val peekHeight = navViewHeight + dpToPx(80) // "Pontinha" acima do navView
+        val midHeight = (displayMetrics.heightPixels * 0.35).toInt()
+        val expandedHeight = (displayMetrics.heightPixels * 0.85).toInt() // Quase tela cheia
+
+        bottomSheetBehavior.peekHeight = peekHeight
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+
+        // Callback para mudanças de estado do searchPlaceView
+        searchPlaceView.addOnBottomSheetStateChangedListener { state, _ ->
+            when (state) {
+                SearchPlaceBottomSheetView.OPEN -> {
+                    NavigationViewUtils.esconderBottomNavigationView(requireActivity())
+                }
+                SearchPlaceBottomSheetView.HIDDEN -> {
+                    val destinos = homeViewModel.obterUltimaRota()?.destinosRota ?: emptyList()
+                    if(bottomSheetBehavior.state == BottomSheetBehavior.STATE_HIDDEN && destinos.isEmpty()) {
+                        NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
+                    } else{
+                        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+                    }
+                    val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
+                    mapaFragment?.removeLastMarker()
+                }
+                else -> {}
+            }
+        }
 
         bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 val acTarget = requireView().findViewById<View>(R.id.ac_target)
                 when (newState) {
                     BottomSheetBehavior.STATE_HIDDEN -> {
-                        mostrarBottomNavigationView()
+                        NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = dpToPx(120)
                         }
                     }
-                    BottomSheetBehavior.STATE_EXPANDED -> {
-                        esconderBottomNavigationView()
-                        val displayMetrics = resources.displayMetrics
-                        val targetHeight = (displayMetrics.heightPixels * 0.35).toInt()
+                    BottomSheetBehavior.STATE_COLLAPSED -> {
+                        NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
+                        // Estado colapsado: só a "pontinha" acima do navView
+                        bottomSheet.requestLayout()
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                            bottomMargin = targetHeight + dpToPx(16)
+                            bottomMargin = peekHeight + dpToPx(16)
+                        }
+                    }
+                    BottomSheetBehavior.STATE_EXPANDED -> {
+                        NavigationViewUtils.esconderBottomNavigationView(requireActivity())
+                        bottomSheet.layoutParams.height = midHeight
+                        bottomSheet.requestLayout()
+                        acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                            bottomMargin = midHeight + dpToPx(16)
                         }
                     }
                 }
@@ -107,6 +145,7 @@ class HomeFragment : Fragment() {
 
             if (origem != null && !destinos.isNullOrEmpty()) {
                 mapaFragment?.requestRoutes(origem, destinos){}
+                mapaFragment?.updateCamera(origem, destino.ponto)
             } else {
                 mapaFragment?.clearRoutes()
             }
@@ -114,6 +153,7 @@ class HomeFragment : Fragment() {
         recyclerView?.adapter = destinoAdapter
         recyclerView?.layoutManager = LinearLayoutManager(requireContext())
 
+        // Inicializo o MapaFragment
         childFragmentManager.commit {
             replace(R.id.map_container, MapaFragment().getInstance())
         }
@@ -123,7 +163,7 @@ class HomeFragment : Fragment() {
         val navController = navHostFragment.navController
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            toggleActionBarForScreen(destination.id == R.id.profileFragment)
+            NavigationViewUtils.toggleActionBarForScreen(requireActivity(), true) // para esconder
         }
 
         binding.root.findViewById<View>(R.id.search_container).setOnClickListener {
@@ -173,16 +213,16 @@ class HomeFragment : Fragment() {
             mapaFragment.setupMapMoveListener(targetIcon)
         }
 
+        binding.root.findViewById<View>(R.id.ac_route).setOnClickListener {
+            findNavController().navigate(R.id.navigation_routes)
+        }
+
         binding.root.findViewById<View>(R.id.map_type_button).setOnClickListener {
             MapaBottomSheetFragment().show(parentFragmentManager, "RotaBottomSheet")
         }
 
         searchPlaceView.addOnCloseClickListener {
-            val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
-            mapaFragment?.removeLastMarker()
             searchPlaceView.hide()
-            //showDestinos()
-            mostrarBottomNavigationView()
         }
 
         searchPlaceView.addOnNavigateClickListener { searchPlace ->
@@ -206,10 +246,11 @@ class HomeFragment : Fragment() {
 
                     val destinos = homeViewModel.obterUltimaRota()?.destinosRota ?: listOf(destination)
                     mapaFragment.requestRoutes(origin, destinos) {
-                        Toast.makeText(requireContext(), "Rota solicitada: $origin", Toast.LENGTH_SHORT).show()
+                        //Toast.makeText(requireContext(), "Rota solicitada: $origin", Toast.LENGTH_SHORT).show()
                         searchPlaceView.hide()
                         mapaFragment.removeLastMarker()
                     }
+                    mapaFragment.updateCamera(origin, destination.ponto)
                 } else {
                     Toast.makeText(requireContext(), "Localização do usuário não disponível", Toast.LENGTH_SHORT).show()
                 }
@@ -226,13 +267,6 @@ class HomeFragment : Fragment() {
         }
 
         return root
-    }
-
-    private fun toggleActionBarForScreen(hide: Boolean) {
-        val actionBar = (requireActivity() as AppCompatActivity).supportActionBar
-        if (hide) {
-            actionBar?.hide()
-        }
     }
 
     override fun onDestroyView() {
@@ -252,29 +286,7 @@ class HomeFragment : Fragment() {
             mapaFragment.addMarker(coordinate.latitude(), coordinate.longitude())
         }
 
-        esconderBottomNavigationView()
-    }
-
-    private fun esconderBottomNavigationView(){
-        val navView = requireActivity().findViewById<View>(R.id.nav_view)
-        navView?.animate()
-            ?.translationY(navView.height.toFloat())
-            ?.alpha(0f)
-            ?.setDuration(250)
-            ?.withEndAction { navView.visibility = View.GONE }
-            ?.start()
-    }
-
-    private fun mostrarBottomNavigationView() {
-        val navView = requireActivity().findViewById<View>(R.id.nav_view)
-        navView?.apply {
-            visibility = View.VISIBLE
-            animate()
-                .translationY(0f)
-                .alpha(1f)
-                .setDuration(250)
-                .start()
-        }
+        NavigationViewUtils.esconderBottomNavigationView(requireActivity())
     }
 
     @Deprecated("Deprecated in Java")
@@ -296,6 +308,7 @@ class HomeFragment : Fragment() {
         if (destinos.isEmpty()) {
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
         } else {
+            // Ao mostrar, começa no estado colapsado (meio)
             val displayMetrics = resources.displayMetrics
             val targetHeight = (displayMetrics.heightPixels * 0.35).toInt()
             bottomSheet.layoutParams.height = targetHeight

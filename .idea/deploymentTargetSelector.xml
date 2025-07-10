@@ -4,13 +4,21 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2025-07-10T15:05:51.493838700Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=RXCX500PZMM" />
+            </handle>
+          </Target>
+        </DropdownSelection>
+        <DialogSelection />
       </SelectionState>
       <SelectionState runConfigName="Pathfinder">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-06-17T20:16:16.634158200Z">
+        <DropdownSelection timestamp="2025-07-10T01:20:46.841023100Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Default" identifier="serial=RXCX500PZMM;connection=58848d72" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=RXCX500PZMM" />
             </handle>
           </Target>
         </DropdownSelection>
