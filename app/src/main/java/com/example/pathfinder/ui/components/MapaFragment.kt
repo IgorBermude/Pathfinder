@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -16,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.pathfinder.R
 import com.example.pathfinder.data.models.Destino
+import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
@@ -56,21 +58,22 @@ import com.mapbox.maps.EdgeInsets
 import com.mapbox.maps.MapboxDelicateApi
 import com.mapbox.maps.plugin.animation.MapAnimationOptions
 import com.mapbox.maps.plugin.animation.camera
+import com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
+import com.mapbox.navigation.core.replay.route.ReplayRouteMapper
+import com.mapbox.navigation.ui.maps.camera.NavigationCamera
+import com.mapbox.navigation.ui.maps.camera.data.MapboxNavigationViewportDataSource
+import com.mapbox.navigation.ui.maps.camera.lifecycle.NavigationBasicGesturesHandler
+import com.mapbox.navigation.ui.maps.camera.state.NavigationCameraState
+import com.mapbox.navigation.ui.maps.camera.transition.NavigationCameraTransitionOptions
 
 class MapaFragment : Fragment() {
 
-    private lateinit var mapView: MapView
+    lateinit var mapView: MapView
     private val mapManager = MapManeger // Use o MapManager para gerenciar a instância do mapa
     private var instance: MapaFragment? = null
     private lateinit var mapMarkersManager: MapMarkersManager
     private val permissionRequestCode = 1001
     private val SEARCH_REQUEST_CODE = 1001
-    /*private val defaultCamera = CameraOptions.Builder()
-        .zoom(2.0)
-        .center(Point.fromLngLat(-98.0, 39.5))
-        .pitch(0.0)
-        .bearing(0.0)
-        .build()*/
     private val preferences by lazy {
         requireContext().getSharedPreferences("map_state", Context.MODE_PRIVATE)
     }
@@ -78,20 +81,39 @@ class MapaFragment : Fragment() {
     private val navigationLocationProvider = NavigationLocationProvider()
     private lateinit var routeLineApi: MapboxRouteLineApi
     private lateinit var routeLineView: MapboxRouteLineView
-    private val locationObserver =
-        object : LocationObserver {
-            override fun onNewRawLocation(rawLocation: Location) {}
+    private val locationObserver = object : LocationObserver {
+        var firstLocationUpdateReceived = false
 
-            override fun onNewLocationMatcherResult(locationMatcherResult: LocationMatcherResult) {
-                val enhancedLocation = locationMatcherResult.enhancedLocation
-                // update location puck's position on the map
-                navigationLocationProvider.changePosition(
-                    location = enhancedLocation,
-                    keyPoints = locationMatcherResult.keyPoints,
-                )
-                println("Localização: ${enhancedLocation?.latitude}, ${enhancedLocation?.longitude}")
+        override fun onNewRawLocation(rawLocation: Location) {
+            // not handled
+        }
+
+        override fun onNewLocationMatcherResult(locationMatcherResult: LocationMatcherResult) {
+            val enhancedLocation = locationMatcherResult.enhancedLocation
+            // update location puck's position on the map
+            navigationLocationProvider.changePosition(
+                location = enhancedLocation,
+                keyPoints = locationMatcherResult.keyPoints,
+            )
+
+            // update camera position to account for new location
+            viewportDataSource.onLocationChanged(enhancedLocation)
+            viewportDataSource.evaluate()
+
+            // if this is the first location update the activity has received,
+            // it's best to immediately move the camera to the current user location
+            if (!firstLocationUpdateReceived) {
+                firstLocationUpdateReceived = true
+                cameraSeguir()
             }
         }
+    }
+    /**
+     * Debug object that converts a route into events that can be replayed to navigate a route.
+     */
+    private val replayRouteMapper = ReplayRouteMapper()
+
+
     // Delegate para o MapboxNavigation conforme recomendado
     private val mapboxNavigation: MapboxNavigation by requireMapboxNavigation(
         onResumedObserver = object : MapboxNavigationObserver {
@@ -124,6 +146,26 @@ class MapaFragment : Fragment() {
             }
         }
     }
+    private lateinit var navigationCamera: NavigationCamera
+    private lateinit var viewportDataSource: MapboxNavigationViewportDataSource
+    private val pixelDensity = Resources.getSystem().displayMetrics.density
+    private val overviewPadding: EdgeInsets by lazy {
+        EdgeInsets(
+            140.0 * pixelDensity,
+            40.0 * pixelDensity,
+            120.0 * pixelDensity,
+            40.0 * pixelDensity
+        )
+    }
+    private val followingPadding: EdgeInsets by lazy {
+        EdgeInsets(
+            180.0 * pixelDensity,
+            40.0 * pixelDensity,
+            150.0 * pixelDensity,
+            40.0 * pixelDensity
+        )
+    }
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -152,6 +194,21 @@ class MapaFragment : Fragment() {
             requestLocationPermission()
         }
 
+        val mapboxMap = mapView.mapboxMap
+        viewportDataSource = MapboxNavigationViewportDataSource(mapboxMap)
+        navigationCamera = NavigationCamera(
+            mapboxMap,
+            mapView.camera,
+            viewportDataSource
+        )
+
+        mapView.camera.addCameraAnimationsLifecycleListener(
+            NavigationBasicGesturesHandler(navigationCamera)
+        )
+        // set the padding values depending to correctly frame maneuvers and the puck
+        viewportDataSource.overviewPadding = overviewPadding
+        viewportDataSource.followingPadding = followingPadding
+
         return mapView
     }
 
@@ -160,6 +217,7 @@ class MapaFragment : Fragment() {
 
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == SEARCH_REQUEST_CODE && resultCode == AppCompatActivity.RESULT_OK) {
@@ -205,7 +263,7 @@ class MapaFragment : Fragment() {
     }
 
     private fun initializeMap() {
-        mapManager.getMapView()?.getMapboxMap()?.loadStyleUri(Style.STANDARD_EXPERIMENTAL) { style ->
+        mapManager.getMapView()?.getMapboxMap()?.loadStyleUri("mapbox://styles/mapbox/streets-v12") { style ->
             // Associe o LocationProvider do MapView ao navigationLocationProvider
             mapView.location.apply {
                 setLocationProvider(navigationLocationProvider)
@@ -307,37 +365,6 @@ class MapaFragment : Fragment() {
         mapView.location.removeOnIndicatorPositionChangedListener(oneTimeListener)
     }
 
-    // Refazer a centralização da rota
-    fun centralizeRoute(routeDestinos: List<Destino>) {
-        // Verificar se há destinos suficientes
-        if (routeDestinos.isEmpty()) return
-
-        // Extrai os Points dos Destinos
-        val coordinates = routeDestinos.map { it.ponto }
-
-        // Definir padding para dar margem ao redor da rota
-        val padding = EdgeInsets(
-            120.0, // top
-            40.0,  // left
-            120.0, // bottom
-            40.0   // right
-        )
-
-        // Calcular a câmera que enquadra todas as coordenadas da rota
-        val cameraOptions = mapView.mapboxMap.cameraForCoordinates(
-            coordinates = coordinates,
-            coordinatesPadding = padding,
-        )
-
-        // Animar a transição da câmera com opções personalizadas
-        val animationOptions = MapAnimationOptions.Builder()
-            .duration(1500L)  // Duração da animação em milissegundos
-            .build()
-
-        // Aplicar a animação
-        mapView.camera.flyTo(cameraOptions, animationOptions)
-    }
-
     fun setupMapMoveListener(targetIcon: ImageView) {
         mapView.gestures.addOnMoveListener(
             object : com.mapbox.maps.plugin.gestures.OnMoveListener {
@@ -376,11 +403,14 @@ class MapaFragment : Fragment() {
         routeLineView.cancel()
     }
 
+    @OptIn(ExperimentalPreviewMapboxNavigationAPI::class)
     fun requestRoutes(
         origin: Point,
         destinos: List<Destino>,
         onRouteReady: (List<Destino>) -> Unit
     ) {
+        val replayRouteMapper = ReplayRouteMapper()
+
         // A lista começa pelo origin e segue com todos os destinos (convertendo para Point)
         val points = listOf(origin) + destinos.map { it.ponto }
 
@@ -399,6 +429,7 @@ class MapaFragment : Fragment() {
                     routerOrigin: String
                 ) {
                     mapboxNavigation.setNavigationRoutes(routes)
+
                     val routeCoordinates = routes.firstOrNull()
                         ?.directionsRoute
                         ?.geometry()
@@ -447,5 +478,31 @@ class MapaFragment : Fragment() {
         )
     }
 
+    fun iniciarRota(){
 
+    }
+
+    fun cameraSeguir(){
+        navigationCamera.requestNavigationCameraToOverview(
+            stateTransitionOptions = NavigationCameraTransitionOptions.Builder()
+                .maxDuration(0)
+                .build()
+        )
+    }
+
+    @OptIn(ExperimentalPreviewMapboxNavigationAPI::class)
+     fun startSimulation(route: DirectionsRoute) {
+        mapboxNavigation.mapboxReplayer.stop()
+        mapboxNavigation.mapboxReplayer.clearEvents()
+        val replayData = replayRouteMapper.mapDirectionsRouteGeometry(route)
+        mapboxNavigation.mapboxReplayer.pushEvents(replayData)
+        mapboxNavigation.mapboxReplayer.seekTo(replayData[0])
+        mapboxNavigation.mapboxReplayer.play()
+    }
+
+    @OptIn(ExperimentalPreviewMapboxNavigationAPI::class)
+     fun stopSimulation() {
+        mapboxNavigation.mapboxReplayer.stop()
+        mapboxNavigation.mapboxReplayer.clearEvents()
+    }
 }

@@ -4,6 +4,9 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
 import com.example.pathfinder.R
+import com.mapbox.geojson.Point
+import com.mapbox.maps.MapView
+import com.mapbox.maps.plugin.locationcomponent.location
 
 object NavigationViewUtils {
     fun esconderBottomNavigationView(activity: FragmentActivity) {
@@ -34,6 +37,12 @@ object NavigationViewUtils {
             actionBar?.hide()
         } else {
             actionBar?.show()
+        }
+    }
+
+    fun observeUserLocation(mapView: MapView, onLocationUpdate: (Point) -> Unit) {
+        mapView.location.addOnIndicatorPositionChangedListener { point ->
+            onLocationUpdate(point)
         }
     }
 }

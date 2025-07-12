@@ -1,4 +1,4 @@
-package com.example.pathfinder.ui.route
+package com.example.pathfinder.ui.percorrerRota
 
 import androidx.lifecycle.ViewModel
 

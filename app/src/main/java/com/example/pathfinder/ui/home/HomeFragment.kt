@@ -11,38 +11,33 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.pathfinder.R
 import com.example.pathfinder.data.models.Destino
-import com.example.pathfinder.data.models.Rota
 import com.example.pathfinder.databinding.FragmentHomeBinding
 import com.example.pathfinder.ui.MainActivity
 import com.example.pathfinder.ui.components.DestinoAdapter
 import com.example.pathfinder.ui.components.MapaBottomSheetFragment
 import com.example.pathfinder.ui.components.MapaFragment
+import com.example.pathfinder.ui.percorrerRota.RouteFragment
 import com.example.pathfinder.ui.searchAc.SearchActivity
 import com.example.pathfinder.util.NavigationViewUtils
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.auth.FirebaseAuth
-import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.geojson.Point
-import com.mapbox.navigation.base.extensions.applyDefaultNavigationOptions
 import com.mapbox.search.ResponseInfo
 import com.mapbox.search.result.SearchResult
 import com.mapbox.search.ui.view.CommonSearchViewConfiguration
 import com.mapbox.search.ui.view.DistanceUnitType
 import com.mapbox.search.ui.view.place.SearchPlace
 import com.mapbox.search.ui.view.place.SearchPlaceBottomSheetView
-import java.util.Date
 
 class HomeFragment : Fragment() {
 
@@ -107,19 +102,25 @@ class HomeFragment : Fragment() {
         bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 val acTarget = requireView().findViewById<View>(R.id.ac_target)
+                val btnIniciarRota = requireView().findViewById<View>(R.id.btn_iniciar_rota)
                 when (newState) {
                     BottomSheetBehavior.STATE_HIDDEN -> {
                         NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = dpToPx(120)
                         }
+                        btnIniciarRota?.visibility = View.GONE
                     }
                     BottomSheetBehavior.STATE_COLLAPSED -> {
                         NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
                         // Estado colapsado: só a "pontinha" acima do navView
                         bottomSheet.requestLayout()
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                            bottomMargin = peekHeight + dpToPx(16)
+                            bottomMargin = peekHeight + dpToPx(11)
+                        }
+                        btnIniciarRota?.visibility = View.VISIBLE
+                        btnIniciarRota?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                            bottomMargin = peekHeight + dpToPx(11)
                         }
                     }
                     BottomSheetBehavior.STATE_EXPANDED -> {
@@ -127,6 +128,10 @@ class HomeFragment : Fragment() {
                         bottomSheet.layoutParams.height = midHeight
                         bottomSheet.requestLayout()
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                            bottomMargin = midHeight + dpToPx(16)
+                        }
+                        btnIniciarRota?.visibility = View.VISIBLE
+                        btnIniciarRota?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = midHeight + dpToPx(16)
                         }
                     }
@@ -164,6 +169,14 @@ class HomeFragment : Fragment() {
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             NavigationViewUtils.toggleActionBarForScreen(requireActivity(), true) // para esconder
+        }
+
+        binding.root.findViewById<View>(R.id.btn_iniciar_rota).setOnClickListener{
+            esconderComponentes()
+            childFragmentManager.commit {
+                replace(R.id.ui_container, RouteFragment())
+            }
+            // Inicie a simulação do movimento do usuário
         }
 
         binding.root.findViewById<View>(R.id.search_container).setOnClickListener {
@@ -209,12 +222,8 @@ class HomeFragment : Fragment() {
             targetIcon.setColorFilter(resources.getColor(R.color.blue, null))
 
             val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as MapaFragment
-            mapaFragment.centralizeUserLocation()
+            mapaFragment.cameraSeguir()
             mapaFragment.setupMapMoveListener(targetIcon)
-        }
-
-        binding.root.findViewById<View>(R.id.ac_route).setOnClickListener {
-            findNavController().navigate(R.id.navigation_routes)
         }
 
         binding.root.findViewById<View>(R.id.map_type_button).setOnClickListener {
@@ -321,5 +330,21 @@ class HomeFragment : Fragment() {
         return TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP, dp.toFloat(), resources.displayMetrics
         ).toInt()
+    }
+
+    private fun esconderComponentes() {
+        val searchBar = requireView().findViewById<View>(R.id.search_bar)
+        val actionProfile = requireView().findViewById<View>(R.id.action_profile)
+        val btnIniciarRota = requireView().findViewById<View>(R.id.btn_iniciar_rota)
+
+        // Animação de fade out e esconder
+        listOf(searchBar, actionProfile, btnIniciarRota).forEach { view ->
+            view?.animate()
+                ?.alpha(0f)
+                ?.setDuration(300)
+                ?.withEndAction { view.visibility = View.GONE }
+                ?.start()
+        }
+        NavigationViewUtils.esconderBottomNavigationView(requireActivity())
     }
 }

@@ -18,6 +18,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.lifecycle.Observer
 import com.example.pathfinder.ui.components.LocationHelper
+import com.example.pathfinder.util.NavigationViewUtils.observeUserLocation
 import com.mapbox.search.ApiType
 import com.mapbox.search.ResponseInfo
 import com.mapbox.search.SearchEngine
@@ -131,23 +132,32 @@ class SearchActivity : AppCompatActivity() {
             onBackPressed()
         }
 
-        val point = Point.fromLngLat(-40.2952889, -20.3073669)
         searchInput.addTextChangedListener(object : TextWatcher {
             override fun onTextChanged(text: CharSequence, start: Int, before: Int, count: Int) {
-                // Quando o texto mudar, faça a busca
+                // Use a localização do usuário do ViewModel, se disponível
+                val userLocation = searchViewModel.pointLiveData.value
+                System.out.println("Localização do usuário: $userLocation")
                 searchEngine.search(
                     text.toString(),
                     SearchOptions.Builder()
                         .limit(10)
                         .countries(listOf(IsoCountryCode.BRAZIL))
-                        .origin(point)
+                        .origin(userLocation!!)
                         .build(),
                     object : SearchSelectionCallback {
-                        override fun onSuggestions(suggestions: List<SearchSuggestion>, responseInfo: ResponseInfo) {
+                        override fun onSuggestions(
+                            suggestions: List<SearchSuggestion>,
+                            responseInfo: ResponseInfo
+                        ) {
                             // Atualize o RecyclerView com as sugestões
                             suggestionsAdapter.submitList(suggestions)
                         }
-                        override fun onResult(suggestion: SearchSuggestion, result: SearchResult, info: ResponseInfo) {
+
+                        override fun onResult(
+                            suggestion: SearchSuggestion,
+                            result: SearchResult,
+                            info: ResponseInfo
+                        ) {
                             // Retornar o resultado selecionado para o HomeFragment
                             val resultIntent = Intent().apply {
                                 putExtra("location_name", suggestion.name)
@@ -159,9 +169,15 @@ class SearchActivity : AppCompatActivity() {
                             setResult(RESULT_OK, resultIntent)
                             finish()
                         }
-                        override fun onResults(suggestion: SearchSuggestion, results: List<SearchResult>, responseInfo: ResponseInfo) {
+
+                        override fun onResults(
+                            suggestion: SearchSuggestion,
+                            results: List<SearchResult>,
+                            responseInfo: ResponseInfo
+                        ) {
                             // Trate resultados de categoria
                         }
+
                         override fun onError(e: Exception) {
                             System.out.println("Erro ao buscar: ${e.message}")
                         }

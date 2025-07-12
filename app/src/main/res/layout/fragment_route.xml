@@ -4,12 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Mapa -->
-    <FrameLayout
-        android:id="@+id/map_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
     <androidx.cardview.widget.CardView
         android:id="@+id/tripProgressCard"
         android:layout_width="0dp"

@@ -55,17 +55,6 @@
             app:backgroundTint="@color/white" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/ac_route"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginBottom="120dp"
-            android:src="@drawable/target"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:maxImageSize="35dp" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/ac_target"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -75,6 +64,26 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:maxImageSize="35dp" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_iniciar_rota"
+            android:layout_width="202dp"
+            android:layout_height="64dp"
+            android:layout_marginStart="40dp"
+            android:layout_marginEnd="40dp"
+            android:layout_marginBottom="115dp"
+            android:background="@drawable/custom_button_background"
+            android:padding="18dp"
+            android:text="Iniciar Rota"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- BottomSheetView da MapBox -->
@@ -88,5 +97,15 @@
     <include
         layout="@layout/bottom_sheet_destinos"
         android:id="@+id/bottom_sheet_destinos"/>
+
+    <!-- Conteiner para o fragmento de percorrer rotas -->
+    <FrameLayout
+        android:id="@+id/ui_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/search_bar"
+        app:layout_constraintBottom_toTopOf="@id/ac_target"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
