@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -55,16 +56,31 @@ import com.mapbox.navigation.core.trip.session.LocationObserver
 import com.mapbox.navigation.core.trip.session.LocationMatcherResult
 import com.mapbox.common.location.Location
 import com.mapbox.maps.EdgeInsets
+import com.mapbox.maps.ImageHolder
 import com.mapbox.maps.MapboxDelicateApi
+import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.animation.MapAnimationOptions
 import com.mapbox.maps.plugin.animation.camera
 import com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
+import com.mapbox.navigation.base.formatter.DistanceFormatterOptions
+import com.mapbox.navigation.base.options.NavigationOptions
+import com.mapbox.navigation.core.lifecycle.MapboxNavigationApp
+import com.mapbox.navigation.core.replay.route.ReplayProgressObserver
 import com.mapbox.navigation.core.replay.route.ReplayRouteMapper
+import com.mapbox.navigation.core.trip.session.OffRouteObserver
+import com.mapbox.navigation.core.trip.session.RouteProgressObserver
+import com.mapbox.navigation.core.trip.session.VoiceInstructionsObserver
+import com.mapbox.navigation.tripdata.speedlimit.api.MapboxSpeedInfoApi
+import com.mapbox.navigation.tripdata.speedlimit.model.SpeedInfoValue
 import com.mapbox.navigation.ui.maps.camera.NavigationCamera
 import com.mapbox.navigation.ui.maps.camera.data.MapboxNavigationViewportDataSource
 import com.mapbox.navigation.ui.maps.camera.lifecycle.NavigationBasicGesturesHandler
 import com.mapbox.navigation.ui.maps.camera.state.NavigationCameraState
 import com.mapbox.navigation.ui.maps.camera.transition.NavigationCameraTransitionOptions
+import com.mapbox.navigation.ui.maps.route.arrow.api.MapboxRouteArrowApi
+import com.mapbox.navigation.ui.maps.route.arrow.api.MapboxRouteArrowView
+import com.mapbox.navigation.ui.maps.route.arrow.model.RouteArrowOptions
+import java.util.Date
 
 class MapaFragment : Fragment() {
 
@@ -78,9 +94,18 @@ class MapaFragment : Fragment() {
         requireContext().getSharedPreferences("map_state", Context.MODE_PRIVATE)
     }
     // Navigation UI helpers
-    private val navigationLocationProvider = NavigationLocationProvider()
+    val navigationLocationProvider = NavigationLocationProvider()
     private lateinit var routeLineApi: MapboxRouteLineApi
     private lateinit var routeLineView: MapboxRouteLineView
+
+    var limitInfo: SpeedInfoValue? = null
+
+    /**
+     * Gets notified with location updates.
+     *
+     * Exposes raw updates coming directly from the location services
+     * and the updates enhanced by the Navigation SDK (cleaned up and matched to the road).
+     */
     private val locationObserver = object : LocationObserver {
         var firstLocationUpdateReceived = false
 
@@ -106,48 +131,98 @@ class MapaFragment : Fragment() {
                 firstLocationUpdateReceived = true
                 cameraSeguir()
             }
+
+            limitInfo = speedInfoApi.updatePostedAndCurrentSpeed(
+                locationMatcherResult,
+                distanceFormatterOptions
+            )
         }
     }
+
+    /**
+     * Generates updates for the [routeArrowView] with the geometries and properties of maneuver arrows that should be drawn on the map.
+     */
+    val routeArrowApi: MapboxRouteArrowApi = MapboxRouteArrowApi()
+
+    /**
+     * Debug observer that makes sure the replayer has always an up-to-date information to generate mock updates.
+     */
+    private lateinit var replayProgressObserver: ReplayProgressObserver
+
     /**
      * Debug object that converts a route into events that can be replayed to navigate a route.
      */
     private val replayRouteMapper = ReplayRouteMapper()
 
-
     // Delegate para o MapboxNavigation conforme recomendado
-    private val mapboxNavigation: MapboxNavigation by requireMapboxNavigation(
+    @OptIn(ExperimentalPreviewMapboxNavigationAPI::class)
+    val mapboxNavigation: MapboxNavigation by requireMapboxNavigation(
         onResumedObserver = object : MapboxNavigationObserver {
             @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
             override fun onAttached(mapboxNavigation: MapboxNavigation) {
                 mapboxNavigation.registerRoutesObserver(routesObserver)
                 mapboxNavigation.registerLocationObserver(locationObserver)
                 mapboxNavigation.startTripSession()
+                mapboxNavigation.registerOffRouteObserver(offRouteObserver)
+
+                replayProgressObserver = ReplayProgressObserver(mapboxNavigation.mapboxReplayer)
+                mapboxNavigation.registerRouteProgressObserver(replayProgressObserver)
             }
             override fun onDetached(mapboxNavigation: MapboxNavigation) {
                 mapboxNavigation.unregisterRoutesObserver(routesObserver)
                 mapboxNavigation.unregisterLocationObserver(locationObserver)
+                mapboxNavigation.unregisterRouteProgressObserver(replayProgressObserver)
+                mapboxNavigation.unregisterOffRouteObserver(offRouteObserver)
             }
         }
     )
-    private val routesObserver = RoutesObserver { routeUpdateResult ->
-        if (routeUpdateResult.navigationRoutes.isNotEmpty()) {
-            val routeLines = routeUpdateResult.navigationRoutes.map { NavigationRouteLine(it, null) }
-            routeLineApi.setNavigationRouteLines(routeLines) { value ->
-                mapView.getMapboxMap().getStyle()?.let { style ->
-                    routeLineView.renderRouteDrawData(style, value)
-                }
-            }
-        } else {
-            // Limpa as rotas do mapa se não houver rotas
-            routeLineApi.clearRouteLine { value ->
-                mapView.getMapboxMap().getStyle()?.let { style ->
-                    routeLineView.renderClearRouteLineValue(style, value)
-                }
-            }
+
+    /**
+     * Draws maneuver arrows on the map based on the data [routeArrowApi].
+     */
+    lateinit var routeArrowView: MapboxRouteArrowView
+
+    val offRouteObserver = object : OffRouteObserver {
+        override fun onOffRouteStateChanged(offRoute: Boolean) {
         }
     }
-    private lateinit var navigationCamera: NavigationCamera
-    private lateinit var viewportDataSource: MapboxNavigationViewportDataSource
+
+    private val routesObserver = RoutesObserver { routeUpdateResult ->
+        if (routeUpdateResult.navigationRoutes.isNotEmpty()) {
+            // generate route geometries asynchronously and render them
+            routeLineApi.setNavigationRoutes(
+                routeUpdateResult.navigationRoutes
+            ) { value ->
+                mapView.getMapboxMap().getStyle()?.apply {
+                    routeLineView.renderRouteDrawData(this, value)
+                }
+            }
+
+            // update the camera position to account for the new route
+            viewportDataSource.onRouteChanged(routeUpdateResult.navigationRoutes.first())
+            viewportDataSource.evaluate()
+        } else {
+            // remove the route line and route arrow from the map
+            val style = mapView.mapboxMap.style
+            if (style != null) {
+                routeLineApi.clearRouteLine { value ->
+                    routeLineView.renderClearRouteLineValue(
+                        style,
+                        value
+                    )
+                }
+                routeArrowView.render(style, routeArrowApi.clearArrows())
+            }
+
+            // remove the route reference from camera position evaluations
+            viewportDataSource.clearRouteData()
+            viewportDataSource.evaluate()
+        }
+    }
+
+
+    lateinit var navigationCamera: NavigationCamera
+    lateinit var viewportDataSource: MapboxNavigationViewportDataSource
     private val pixelDensity = Resources.getSystem().displayMetrics.density
     private val overviewPadding: EdgeInsets by lazy {
         EdgeInsets(
@@ -165,6 +240,22 @@ class MapaFragment : Fragment() {
             40.0 * pixelDensity
         )
     }
+
+    /**
+     * API used for formatting speed limit related data.
+     */
+    private val speedInfoApi: MapboxSpeedInfoApi by lazy {
+        MapboxSpeedInfoApi()
+    }
+
+    /**
+     * Options used for formatting speed information, such as mph or km/h.
+     * By default, the unit type will be determined based on the device's locale.
+     */
+    private val distanceFormatterOptions: DistanceFormatterOptions by lazy {
+        DistanceFormatterOptions.Builder(requireContext()).build()
+    }
+
 
 
     override fun onCreateView(
@@ -184,9 +275,12 @@ class MapaFragment : Fragment() {
             .routeLineColorResources(RouteLineColorResources.Builder().build())
             .routeLineBelowLayerId("road-label-navigation")
             .build()
-        val routeLineApiOptions = MapboxRouteLineApiOptions.Builder().build()
         routeLineView = MapboxRouteLineView(routeLineViewOptions)
-        routeLineApi = MapboxRouteLineApi(routeLineApiOptions)
+        routeLineApi = MapboxRouteLineApi(MapboxRouteLineApiOptions.Builder().build())
+
+        // initialize maneuver arrow view to draw arrows on the map
+        val routeArrowOptions = RouteArrowOptions.Builder(requireContext()).build()
+        routeArrowView = MapboxRouteArrowView(routeArrowOptions)
 
         if (hasLocationPermission()) {
             initializeMap()
@@ -195,6 +289,8 @@ class MapaFragment : Fragment() {
         }
 
         val mapboxMap = mapView.mapboxMap
+
+        // initialize Navigation Camera
         viewportDataSource = MapboxNavigationViewportDataSource(mapboxMap)
         navigationCamera = NavigationCamera(
             mapboxMap,
@@ -202,6 +298,8 @@ class MapaFragment : Fragment() {
             viewportDataSource
         )
 
+        // set the animations lifecycle listener to ensure the NavigationCamera stops
+        // automatically following the user location when the map is interacted with
         mapView.camera.addCameraAnimationsLifecycleListener(
             NavigationBasicGesturesHandler(navigationCamera)
         )
@@ -274,27 +372,7 @@ class MapaFragment : Fragment() {
             trackCameraChanges()
             mapManager.getMapView()?.compass?.enabled = false
             mapManager.getMapView()?.scalebar?.enabled = false
-
-            addTrafficPoints()
         }
-    }
-
-    private fun addTrafficPoints() {
-        val annotationManager = mapManager.getMapView()?.annotations?.createPointAnnotationManager()
-
-        /*val trafficPoints = listOf(
-            Triple("Semáforo", -98.0, 39.5),
-            Triple("Radar", -98.2, 39.7),
-            Triple("Obra", -98.1, 39.6)
-        )
-
-        for ((label, lng, lat) in trafficPoints) {
-            annotationManager?.create(
-                PointAnnotationOptions()
-                    .withPoint(Point.fromLngLat(lng, lat))
-                    .withTextField(label)
-            )
-        }*/
     }
 
     private fun enableLocationComponent() {
@@ -381,14 +459,14 @@ class MapaFragment : Fragment() {
     fun getMapMarkersManager(): MapMarkersManager = mapMarkersManager
 
     fun getUserLocation(callback: (android.location.Location?) -> Unit) {
-        val tempLocationObserver = object : com.mapbox.navigation.core.trip.session.LocationObserver {
+        val tempLocationObserver = object : LocationObserver {
             override fun onNewRawLocation(rawLocation: Location) {
                 // Não utilizado aqui
             }
 
             override fun onNewLocationMatcherResult(locationMatcherResult: LocationMatcherResult) {
                 // Converte de com.mapbox.common.location.Location para android.location.Location
-                val androidLocation = locationMatcherResult.enhancedLocation?.toAndroidLocation()
+                val androidLocation = locationMatcherResult.enhancedLocation.toAndroidLocation()
                 callback(androidLocation)
                 mapboxNavigation.unregisterLocationObserver(this)
             }
@@ -419,6 +497,7 @@ class MapaFragment : Fragment() {
             .applyLanguageAndVoiceUnitOptions(requireContext())
             .coordinatesList(points)
             .alternatives(false)
+            .language("pt")
             .build()
 
         mapboxNavigation.requestRoutes(
@@ -478,10 +557,6 @@ class MapaFragment : Fragment() {
         )
     }
 
-    fun iniciarRota(){
-
-    }
-
     fun cameraSeguir(){
         navigationCamera.requestNavigationCameraToOverview(
             stateTransitionOptions = NavigationCameraTransitionOptions.Builder()
@@ -504,5 +579,41 @@ class MapaFragment : Fragment() {
      fun stopSimulation() {
         mapboxNavigation.mapboxReplayer.stop()
         mapboxNavigation.mapboxReplayer.clearEvents()
+    }
+
+
+    fun setRouteProgressObserver(observer: RouteProgressObserver) {
+        mapboxNavigation.registerRouteProgressObserver(observer)
+    }
+
+    fun removeRouteProgressObserver(observer: RouteProgressObserver) {
+        mapboxNavigation.unregisterRouteProgressObserver(observer)
+    }
+
+    fun setVoiceInstructionsObserver(observer: VoiceInstructionsObserver) {
+        mapboxNavigation.registerVoiceInstructionsObserver(observer)
+    }
+
+    fun removeVoiceInstructionsObserver(observer: VoiceInstructionsObserver) {
+        mapboxNavigation.unregisterVoiceInstructionsObserver(observer)
+    }
+
+    fun initNavigation() {
+        MapboxNavigationApp.setup(
+            NavigationOptions.Builder(requireContext())
+                .build()
+        )
+
+        // initialize location puck
+        mapView.location.apply {
+            setLocationProvider(navigationLocationProvider)
+            this.locationPuck = LocationPuck2D(
+                bearingImage = ImageHolder.Companion.from(
+                    R.drawable.mapbox_navigation_puck_icon
+                )
+            )
+            puckBearingEnabled = true
+            enabled = true
+        }
     }
 }

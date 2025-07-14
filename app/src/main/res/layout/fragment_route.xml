@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -8,6 +9,7 @@
         android:id="@+id/tripProgressCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="140dp"
         android:visibility="invisible"
         app:cardElevation="8dp"
         app:cardUseCompatPadding="false"
@@ -33,7 +35,7 @@
         android:id="@+id/maneuverView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="4dp"
+        android:layout_margin="0dp"
         android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -67,5 +69,17 @@
         android:layout_marginEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/routeOverview" />
+
+    <com.mapbox.navigation.ui.components.speedlimit.view.MapboxSpeedInfoView
+        android:id="@+id/speedLimitView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/maneuverView">
+        <!-- Uncomment the following line of code to customize the MapboxManeuverView -->
+        <!-- style="@style/MapboxCustomManeuverStyle" -->
+    </com.mapbox.navigation.ui.components.speedlimit.view.MapboxSpeedInfoView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

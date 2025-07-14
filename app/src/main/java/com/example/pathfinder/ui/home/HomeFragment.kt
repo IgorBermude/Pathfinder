@@ -176,7 +176,6 @@ class HomeFragment : Fragment() {
             childFragmentManager.commit {
                 replace(R.id.ui_container, RouteFragment())
             }
-            // Inicie a simulação do movimento do usuário
         }
 
         binding.root.findViewById<View>(R.id.search_container).setOnClickListener {
@@ -336,6 +335,7 @@ class HomeFragment : Fragment() {
         val searchBar = requireView().findViewById<View>(R.id.search_bar)
         val actionProfile = requireView().findViewById<View>(R.id.action_profile)
         val btnIniciarRota = requireView().findViewById<View>(R.id.btn_iniciar_rota)
+        val acTarget = requireView().findViewById<View>(R.id.ac_target)
 
         // Animação de fade out e esconder
         listOf(searchBar, actionProfile, btnIniciarRota).forEach { view ->
@@ -345,6 +345,6 @@ class HomeFragment : Fragment() {
                 ?.withEndAction { view.visibility = View.GONE }
                 ?.start()
         }
-        NavigationViewUtils.esconderBottomNavigationView(requireActivity())
+        acTarget.visibility = View.GONE
     }
 }
