@@ -17,10 +17,18 @@
 
     <!-- Indicador visual de arraste -->
     <View
+        android:id="@+id/drag_indicator"
         android:layout_width="40dp"
         android:layout_height="5dp"
         android:layout_gravity="center_horizontal"
         android:background="@drawable/bg_drag_indicator"
+        android:layout_marginBottom="12dp"/>
+
+    <FrameLayout
+        android:id="@+id/route_info_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:layout_marginBottom="12dp"/>
 
     <TextView

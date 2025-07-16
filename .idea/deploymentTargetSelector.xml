@@ -15,10 +15,10 @@
       </SelectionState>
       <SelectionState runConfigName="Pathfinder">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-07-10T01:20:46.841023100Z">
+        <DropdownSelection timestamp="2025-07-16T13:06:41.154876Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=RXCX500PZMM" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.0.21:34927;connection=798259a5" />
             </handle>
           </Target>
         </DropdownSelection>

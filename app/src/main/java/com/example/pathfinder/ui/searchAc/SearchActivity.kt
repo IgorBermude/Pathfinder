@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -18,6 +19,8 @@ import androidx.activity.viewModels
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.lifecycle.Observer
 import com.example.pathfinder.ui.components.LocationHelper
+import com.example.pathfinder.ui.components.MapaFragment
+import com.example.pathfinder.ui.home.HomeFragment
 import com.example.pathfinder.util.NavigationViewUtils.observeUserLocation
 import com.mapbox.search.ApiType
 import com.mapbox.search.ResponseInfo
@@ -28,6 +31,10 @@ import com.mapbox.search.SearchSelectionCallback
 import com.mapbox.search.common.IsoCountryCode
 import com.mapbox.search.result.SearchResult
 import com.mapbox.geojson.Point
+import com.mapbox.maps.plugin.gestures.addOnMapClickListener
+import com.mapbox.search.ReverseGeoOptions
+import com.mapbox.search.SearchCallback
+import com.mapbox.search.ui.view.place.SearchPlace
 
 
 class SearchActivity : AppCompatActivity() {
@@ -36,16 +43,17 @@ class SearchActivity : AppCompatActivity() {
     private lateinit var suggestionsAdapter: SuggestionsAdapter
     private lateinit var searchIcon: ImageView
     private lateinit var searchEngine: SearchEngine
+    private lateinit var btnMapa: Button
     private val searchViewModel: SearchViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
 
-        window.decorView.systemUiVisibility =
+        /*window.decorView.systemUiVisibility =
             window.decorView.systemUiVisibility or
                     View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE*/
 
         LocationHelper.initialize(this)
         LocationHelper.getCurrentLocation(this, this, object : LocationHelper.LocationCallback {
@@ -56,6 +64,17 @@ class SearchActivity : AppCompatActivity() {
                 }
             }
         })
+
+        btnMapa = findViewById(R.id.btnMapa)
+        btnMapa.setOnClickListener {
+            // Ao clicar, retorna para o HomeFragment com um extra para pesquisar por clique no mapa
+            val resultIntent = Intent().apply {
+                putExtra("request_pesquisarPorClique", true)
+            }
+            setResult(RESULT_OK, resultIntent)
+            finish()
+        }
+
         searchViewModel.pointLiveData.observe(this, Observer { point ->
             println("Ponto recebido via ViewModel: $point")
         })
@@ -70,10 +89,11 @@ class SearchActivity : AppCompatActivity() {
         val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
         imm.showSoftInput(searchInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
 
-        searchEngine = SearchEngine.createSearchEngineWithBuiltInDataProviders(
-            apiType = ApiType.GEOCODING,
-            settings = SearchEngineSettings()
-        )
+        // Remova a criação local:
+        // searchEngine = SearchEngine.createSearchEngineWithBuiltInDataProviders(...)
+
+        // Use o searchEngine do ViewModel:
+        searchEngine = searchViewModel.searchEngine
 
         // Configurar RecyclerView para exibir sugestões
         suggestionsAdapter = SuggestionsAdapter(this) { suggestion ->

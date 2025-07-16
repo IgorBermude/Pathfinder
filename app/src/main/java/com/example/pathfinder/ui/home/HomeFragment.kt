@@ -32,7 +32,11 @@ import com.example.pathfinder.util.NavigationViewUtils
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.auth.FirebaseAuth
 import com.mapbox.geojson.Point
+import com.mapbox.maps.plugin.gestures.addOnMapClickListener
+import com.mapbox.maps.plugin.gestures.removeOnMapClickListener
 import com.mapbox.search.ResponseInfo
+import com.mapbox.search.ReverseGeoOptions
+import com.mapbox.search.SearchCallback
 import com.mapbox.search.result.SearchResult
 import com.mapbox.search.ui.view.CommonSearchViewConfiguration
 import com.mapbox.search.ui.view.DistanceUnitType
@@ -72,7 +76,7 @@ class HomeFragment : Fragment() {
         // Definindo os três estados: escondido, colapsado (peek), expandido
         val displayMetrics = resources.displayMetrics
         val navViewHeight = dpToPx(56) // Altura padrão do BottomNavigationView
-        val peekHeight = navViewHeight + dpToPx(80) // "Pontinha" acima do navView
+        val peekHeight = navViewHeight + dpToPx(90) // "Pontinha" acima do navView
         val midHeight = (displayMetrics.heightPixels * 0.35).toInt()
         val expandedHeight = (displayMetrics.heightPixels * 0.85).toInt() // Quase tela cheia
 
@@ -112,11 +116,12 @@ class HomeFragment : Fragment() {
                         btnIniciarRota?.visibility = View.GONE
                     }
                     BottomSheetBehavior.STATE_COLLAPSED -> {
-                        NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
+                        //NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
+                        NavigationViewUtils.esconderBottomNavigationView(requireActivity())
                         // Estado colapsado: só a "pontinha" acima do navView
                         bottomSheet.requestLayout()
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                            bottomMargin = peekHeight + dpToPx(11)
+                            bottomMargin = peekHeight + dpToPx(12)
                         }
                         btnIniciarRota?.visibility = View.VISIBLE
                         btnIniciarRota?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
@@ -237,7 +242,7 @@ class HomeFragment : Fragment() {
             val destination = Destino(
                 nome = searchPlace.name ?: "Destino",
                 ponto = searchPlace.coordinate,
-                distancia = null
+                distancia = searchPlace.distanceMeters
             )
             val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
 
@@ -301,6 +306,10 @@ class HomeFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_SEARCH && resultCode == Activity.RESULT_OK && data != null) {
+            if (data.getBooleanExtra("request_pesquisarPorClique", false)) {
+                pesquisarPorClique()
+                return
+            }
             val searchResult = data.getParcelableExtra<SearchResult>("search_result")
             val responseInfo = data.getParcelableExtra<ResponseInfo>("response_info")
             if (searchResult != null && responseInfo != null) {
@@ -347,4 +356,30 @@ class HomeFragment : Fragment() {
         }
         acTarget.visibility = View.GONE
     }
+
+    private fun pesquisarPorClique(){
+        val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
+        mapaFragment?.mapView?.mapboxMap?.addOnMapClickListener { point ->
+            mapaFragment.getUserLocation { location ->
+                if (location != null) {
+                    mapaFragment.reverseGeocode(ReverseGeoOptions(point), object : SearchCallback {
+                        override fun onResults(results: List<SearchResult>, responseInfo: ResponseInfo) {
+                            val searchPlace = SearchPlace.createFromSearchResult(results.first(), responseInfo)
+                            searchPlaceView.open(searchPlace)
+                            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+                            mapaFragment.addMarker(point.latitude(), point.longitude())
+                        }
+
+                        override fun onError(error: Exception) {
+                            Toast.makeText(requireContext(), "Erro ao buscar localização", Toast.LENGTH_SHORT).show()
+                        }
+                    })
+                } else {
+                    Toast.makeText(requireContext(), "Localização do usuário não disponível", Toast.LENGTH_SHORT).show()
+                }
+            }
+            true
+        }
+    }
+
 }

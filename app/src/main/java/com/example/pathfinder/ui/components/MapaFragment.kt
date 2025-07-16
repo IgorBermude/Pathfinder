@@ -16,8 +16,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import com.example.pathfinder.R
 import com.example.pathfinder.data.models.Destino
+import com.example.pathfinder.ui.searchAc.SearchViewModel
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.geojson.LineString
@@ -81,6 +83,14 @@ import com.mapbox.navigation.ui.maps.route.arrow.api.MapboxRouteArrowApi
 import com.mapbox.navigation.ui.maps.route.arrow.api.MapboxRouteArrowView
 import com.mapbox.navigation.ui.maps.route.arrow.model.RouteArrowOptions
 import java.util.Date
+import com.mapbox.maps.plugin.gestures.OnMapClickListener
+import com.mapbox.search.ApiType
+import com.mapbox.search.ResponseInfo
+import com.mapbox.search.ReverseGeoOptions
+import com.mapbox.search.SearchCallback
+import com.mapbox.search.SearchEngine
+import com.mapbox.search.SearchEngineSettings
+import com.mapbox.search.result.SearchResult
 
 class MapaFragment : Fragment() {
 
@@ -456,6 +466,19 @@ class MapaFragment : Fragment() {
         )
     }
 
+    fun adicionarListenerParaMapa(onPointSelected: (Point) -> Unit) {
+        Toast.makeText(requireContext(), "Clique no mapa para selecionar um local", Toast.LENGTH_SHORT).show()
+        mapView.gestures.addOnMapClickListener(
+            object : OnMapClickListener {
+                override fun onMapClick(point: Point): Boolean {
+                    mapMarkersManager.showMarker(point, R.drawable.location_pin)
+                    onPointSelected(point)
+                    return true
+                }
+            }
+        )
+    }
+
     fun getMapMarkersManager(): MapMarkersManager = mapMarkersManager
 
     fun getUserLocation(callback: (android.location.Location?) -> Unit) {
@@ -481,7 +504,6 @@ class MapaFragment : Fragment() {
         routeLineView.cancel()
     }
 
-    @OptIn(ExperimentalPreviewMapboxNavigationAPI::class)
     fun requestRoutes(
         origin: Point,
         destinos: List<Destino>,
@@ -616,4 +638,25 @@ class MapaFragment : Fragment() {
             enabled = true
         }
     }
+
+    // Obtenha o SearchViewModel compartilhado
+    private val searchViewModel: SearchViewModel by activityViewModels()
+
+    fun reverseGeocode(reverseGeoOptions: ReverseGeoOptions, searchCallback: SearchCallback) {
+        // Use o searchEngine do SearchViewModel para busca reversa
+        searchViewModel.searchEngine.search(
+            reverseGeoOptions,
+            object : SearchCallback {
+                override fun onResults(results: List<SearchResult>, responseInfo: ResponseInfo) {
+                    searchCallback.onResults(results, responseInfo)
+                }
+
+                override fun onError(error: Exception) {
+                    searchCallback.onError(error)
+                }
+            }
+        )
+    }
+
+
 }

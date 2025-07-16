@@ -40,6 +40,8 @@ import com.mapbox.navigation.tripdata.progress.model.TimeRemainingFormatter
 import com.mapbox.navigation.tripdata.progress.model.TripProgressUpdateFormatter
 import com.mapbox.navigation.tripdata.speedlimit.api.MapboxSpeedInfoApi
 import com.mapbox.navigation.ui.base.util.MapboxNavigationConsumer
+import com.mapbox.navigation.ui.components.tripprogress.model.TripProgressViewOptions
+import com.mapbox.navigation.ui.components.tripprogress.view.MapboxTripProgressView
 import com.mapbox.navigation.ui.maps.route.arrow.api.MapboxRouteArrowApi
 import com.mapbox.navigation.voice.api.MapboxSpeechApi
 import com.mapbox.navigation.voice.api.MapboxVoiceInstructionsPlayer
@@ -106,7 +108,9 @@ class RouteFragment : Fragment() {
         )
 
         // update bottom trip progress summary
-        binding.tripProgressView.render(
+        val routeInfoContainer = requireActivity().findViewById<ViewGroup>(R.id.route_info_container)
+        val tripProgressView = routeInfoContainer.findViewById<com.mapbox.navigation.ui.components.tripprogress.view.MapboxTripProgressView>(R.id.tripProgressView)
+        tripProgressView?.render(
             tripProgressApi.getTripProgress(routeProgress)
         )
     }
@@ -200,6 +204,12 @@ class RouteFragment : Fragment() {
         // Recupera a última rota do HomeViewModel
         rota = homeViewModel.obterUltimaRota()
 
+        // Altere a cor da status bar (barra superior)
+        //requireActivity().window.statusBarColor = resources.getColor(R.color.blue_gray, null)
+
+        // Altere a cor da navigation bar (barra inferior)
+        //requireActivity().window.navigationBarColor = resources.getColor(R.color.white, null)
+
         // Se precisar do mapa, recupere o fragmento já existente
         mapaFragment = (requireParentFragment()
             .childFragmentManager
@@ -207,6 +217,26 @@ class RouteFragment : Fragment() {
 
         // make sure to use the same DistanceFormatterOptions across different features
         val distanceFormatterOptions = DistanceFormatterOptions.Builder(requireContext()).build()
+
+        // Infla o item_inforota no route_info_container
+        val routeInfoContainer = requireActivity().findViewById<ViewGroup>(R.id.route_info_container)
+        val inflater = LayoutInflater.from(requireContext())
+        val infoView = inflater.inflate(R.layout.item_inforota, routeInfoContainer, false)
+
+        // Referencie corretamente os elementos do item_inforota
+        val tripProgressCard = infoView.findViewById<View>(R.id.tripProgressCard)
+        val tripProgressView = infoView.findViewById<MapboxTripProgressView>(R.id.tripProgressView)
+        val stopButton = infoView.findViewById<View>(R.id.stop)
+
+        val options = TripProgressViewOptions.Builder()
+            .backgroundColor(R.color.white_gray)
+            .distanceRemainingTextAppearance(R.style.TripProgressTextCentered)
+            // Adicione outras customizações aqui
+            .build()
+
+        tripProgressView.updateOptions(options)
+
+        tripProgressCard.visibility = View.VISIBLE
 
         // initialize maneuver api that feeds the data to the top banner maneuver view
         maneuverApi = MapboxManeuverApi(
@@ -242,7 +272,7 @@ class RouteFragment : Fragment() {
         )
 
         // initialize view interactions
-        binding.stop.setOnClickListener {
+        stopButton.setOnClickListener {
             clearRouteAndStopNavigation()
         }
         binding.recenter.setOnClickListener {
@@ -260,6 +290,12 @@ class RouteFragment : Fragment() {
 
         // set initial sounds button state
         binding.soundButton.unmute()
+
+        stopButton.setOnClickListener {
+            clearRouteAndStopNavigation()
+        }
+
+        routeInfoContainer.addView(infoView)
 
         // Registre o observer APÓS tudo estar pronto
         // Remova qualquer registro duplicado em outros lugares
@@ -282,7 +318,7 @@ class RouteFragment : Fragment() {
         // show UI elements
         binding.soundButton.visibility = View.VISIBLE
         binding.routeOverview.visibility = View.VISIBLE
-        binding.tripProgressCard.visibility = View.VISIBLE
+        //binding.tripProgressCard.visibility = View.VISIBLE
         mapaFragment.cameraSeguir()
         // Chame o método para obter DirectionsRoute e simular
         rota?.let { rotaObj ->
@@ -347,7 +383,6 @@ class RouteFragment : Fragment() {
         binding.soundButton.visibility = View.INVISIBLE
         binding.maneuverView.visibility = View.INVISIBLE
         binding.routeOverview.visibility = View.INVISIBLE
-        binding.tripProgressCard.visibility = View.INVISIBLE
     }
 
     override fun onDestroyView() {

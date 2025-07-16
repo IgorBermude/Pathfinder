@@ -52,6 +52,7 @@
                 android:textColor="@color/black" />
 
             <Button
+                android:id="@+id/btnMapa"
                 android:text="Mapa"
                 android:backgroundTint="@color/verde_padrao"
                 android:textColor="@android:color/white"
