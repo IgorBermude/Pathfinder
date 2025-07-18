@@ -17,10 +17,12 @@ import com.example.pathfinder.ui.components.SuggestionsAdapter
 import com.mapbox.search.result.SearchSuggestion
 import androidx.activity.viewModels
 import androidx.appcompat.widget.AppCompatEditText
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import com.example.pathfinder.ui.components.LocationHelper
 import com.example.pathfinder.ui.components.MapaFragment
 import com.example.pathfinder.ui.home.HomeFragment
+import com.example.pathfinder.ui.home.HomeViewModel
 import com.example.pathfinder.util.NavigationViewUtils.observeUserLocation
 import com.mapbox.search.ApiType
 import com.mapbox.search.ResponseInfo
@@ -45,6 +47,7 @@ class SearchActivity : AppCompatActivity() {
     private lateinit var searchEngine: SearchEngine
     private lateinit var btnMapa: Button
     private val searchViewModel: SearchViewModel by viewModels()
+    private val homeViewModel: HomeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,7 +96,7 @@ class SearchActivity : AppCompatActivity() {
         // searchEngine = SearchEngine.createSearchEngineWithBuiltInDataProviders(...)
 
         // Use o searchEngine do ViewModel:
-        searchEngine = searchViewModel.searchEngine
+        searchEngine = homeViewModel.searchEngine
 
         // Configurar RecyclerView para exibir sugestões
         suggestionsAdapter = SuggestionsAdapter(this) { suggestion ->

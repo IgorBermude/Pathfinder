@@ -6,6 +6,9 @@ import androidx.lifecycle.ViewModel
 import com.example.pathfinder.data.models.Destino
 import com.example.pathfinder.data.models.Rota
 import com.mapbox.geojson.Point
+import com.mapbox.search.ApiType
+import com.mapbox.search.SearchEngine
+import com.mapbox.search.SearchEngineSettings
 import java.util.Date
 
 class HomeViewModel : ViewModel() {
@@ -78,5 +81,13 @@ class HomeViewModel : ViewModel() {
             )
             atualizarUltimaRota(novaRota)
         }
+    }
+
+    // SearchEngine singleton para ser reutilizado
+    val searchEngine: SearchEngine by lazy {
+        SearchEngine.createSearchEngineWithBuiltInDataProviders(
+            apiType = ApiType.GEOCODING,
+            settings = SearchEngineSettings()
+        )
     }
 }

@@ -108,4 +108,20 @@
         layout="@layout/bottom_sheet_destinos"
         android:id="@+id/bottom_sheet_destinos"/>
 
+    <!-- Caixa de texto centralizada e invisível para instrução -->
+    <TextView
+        android:id="@+id/tx_selecione_destino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="150dp"
+        android:background="@drawable/bg_info_box"
+        android:elevation="8dp"
+        android:padding="12dp"
+        android:text="Selecione o destino no mapa"
+        android:textColor="#333333"
+        android:textSize="18sp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:visibility="gone"
+        tools:ignore="MissingConstraints" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

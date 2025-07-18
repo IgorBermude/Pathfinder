@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
+import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
@@ -33,6 +34,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.auth.FirebaseAuth
 import com.mapbox.geojson.Point
 import com.mapbox.maps.plugin.gestures.addOnMapClickListener
+import com.mapbox.maps.plugin.gestures.gestures
 import com.mapbox.maps.plugin.gestures.removeOnMapClickListener
 import com.mapbox.search.ResponseInfo
 import com.mapbox.search.ReverseGeoOptions
@@ -56,6 +58,7 @@ class HomeFragment : Fragment() {
     private val homeViewModel: HomeViewModel by activityViewModels()
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<LinearLayout>
     private lateinit var destinoAdapter: DestinoAdapter
+    private lateinit var txSelecionarDestino: TextView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -83,10 +86,13 @@ class HomeFragment : Fragment() {
         bottomSheetBehavior.peekHeight = peekHeight
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
 
+        txSelecionarDestino = binding.root.findViewById(R.id.tx_selecione_destino)
+
         // Callback para mudanças de estado do searchPlaceView
         searchPlaceView.addOnBottomSheetStateChangedListener { state, _ ->
             when (state) {
                 SearchPlaceBottomSheetView.OPEN -> {
+                    txSelecionarDestino.visibility = View.GONE
                     NavigationViewUtils.esconderBottomNavigationView(requireActivity())
                 }
                 SearchPlaceBottomSheetView.HIDDEN -> {
@@ -109,6 +115,7 @@ class HomeFragment : Fragment() {
                 val btnIniciarRota = requireView().findViewById<View>(R.id.btn_iniciar_rota)
                 when (newState) {
                     BottomSheetBehavior.STATE_HIDDEN -> {
+                        Toast.makeText(requireContext(), "STATE_HIDDEN", Toast.LENGTH_SHORT).show()
                         NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = dpToPx(120)
@@ -116,8 +123,8 @@ class HomeFragment : Fragment() {
                         btnIniciarRota?.visibility = View.GONE
                     }
                     BottomSheetBehavior.STATE_COLLAPSED -> {
-                        //NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
-                        NavigationViewUtils.esconderBottomNavigationView(requireActivity())
+                        Toast.makeText(requireContext(), "STATE_COLLAPSED", Toast.LENGTH_SHORT).show()
+                        NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
                         // Estado colapsado: só a "pontinha" acima do navView
                         bottomSheet.requestLayout()
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
@@ -129,6 +136,7 @@ class HomeFragment : Fragment() {
                         }
                     }
                     BottomSheetBehavior.STATE_EXPANDED -> {
+                        Toast.makeText(requireContext(), "STATE_EXPANDED", Toast.LENGTH_SHORT).show()
                         NavigationViewUtils.esconderBottomNavigationView(requireActivity())
                         bottomSheet.layoutParams.height = midHeight
                         bottomSheet.requestLayout()
@@ -163,11 +171,6 @@ class HomeFragment : Fragment() {
         recyclerView?.adapter = destinoAdapter
         recyclerView?.layoutManager = LinearLayoutManager(requireContext())
 
-        // Inicializo o MapaFragment
-        childFragmentManager.commit {
-            replace(R.id.map_container, MapaFragment().getInstance())
-        }
-
         val navHostFragment =
             requireActivity().supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_main) as NavHostFragment
         val navController = navHostFragment.navController
@@ -181,15 +184,18 @@ class HomeFragment : Fragment() {
             childFragmentManager.commit {
                 replace(R.id.ui_container, RouteFragment())
             }
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
         }
 
         binding.root.findViewById<View>(R.id.search_container).setOnClickListener {
+            txSelecionarDestino.visibility = View.GONE
             val intent = Intent(requireContext(), SearchActivity::class.java)
             startActivityForResult(intent, REQUEST_CODE_SEARCH)
             requireActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
 
         binding.root.findViewById<View>(R.id.search_text).setOnClickListener {
+            txSelecionarDestino.visibility = View.GONE
             val intent = Intent(requireContext(), SearchActivity::class.java)
             startActivityForResult(intent, REQUEST_CODE_SEARCH)
             requireActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
@@ -260,7 +266,7 @@ class HomeFragment : Fragment() {
                     val destinos = homeViewModel.obterUltimaRota()?.destinosRota ?: listOf(destination)
                     mapaFragment.requestRoutes(origin, destinos) {
                         //Toast.makeText(requireContext(), "Rota solicitada: $origin", Toast.LENGTH_SHORT).show()
-                        searchPlaceView.hide()
+                        //searchPlaceView.hide()
                         mapaFragment.removeLastMarker()
                     }
                     mapaFragment.updateCamera(origin, destination.ponto)
@@ -280,6 +286,18 @@ class HomeFragment : Fragment() {
         }
 
         return root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        // Inicializo o MapaFragment
+        childFragmentManager.commit {
+            replace(R.id.map_container, MapaFragment().getInstance())
+        }
+        // Aguarde o commit e o carregamento do mapa
+        view.post {
+            adicionarOnMapClickListenerParaPesquisa()
+        }
     }
 
     override fun onDestroyView() {
@@ -307,7 +325,7 @@ class HomeFragment : Fragment() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_SEARCH && resultCode == Activity.RESULT_OK && data != null) {
             if (data.getBooleanExtra("request_pesquisarPorClique", false)) {
-                pesquisarPorClique()
+                txSelecionarDestino.visibility = View.VISIBLE
                 return
             }
             val searchResult = data.getParcelableExtra<SearchResult>("search_result")
@@ -346,6 +364,8 @@ class HomeFragment : Fragment() {
         val btnIniciarRota = requireView().findViewById<View>(R.id.btn_iniciar_rota)
         val acTarget = requireView().findViewById<View>(R.id.ac_target)
 
+        txSelecionarDestino.visibility = View.GONE
+
         // Animação de fade out e esconder
         listOf(searchBar, actionProfile, btnIniciarRota).forEach { view ->
             view?.animate()
@@ -357,29 +377,33 @@ class HomeFragment : Fragment() {
         acTarget.visibility = View.GONE
     }
 
-    private fun pesquisarPorClique(){
+    private fun adicionarOnMapClickListenerParaPesquisa() {
         val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
-        mapaFragment?.mapView?.mapboxMap?.addOnMapClickListener { point ->
-            mapaFragment.getUserLocation { location ->
-                if (location != null) {
-                    mapaFragment.reverseGeocode(ReverseGeoOptions(point), object : SearchCallback {
-                        override fun onResults(results: List<SearchResult>, responseInfo: ResponseInfo) {
-                            val searchPlace = SearchPlace.createFromSearchResult(results.first(), responseInfo)
-                            searchPlaceView.open(searchPlace)
-                            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-                            mapaFragment.addMarker(point.latitude(), point.longitude())
-                        }
-
-                        override fun onError(error: Exception) {
-                            Toast.makeText(requireContext(), "Erro ao buscar localização", Toast.LENGTH_SHORT).show()
-                        }
-                    })
-                } else {
-                    Toast.makeText(requireContext(), "Localização do usuário não disponível", Toast.LENGTH_SHORT).show()
-                }
-            }
+        mapaFragment?.setOnMapClickListener { point ->
+            realizarPesquisaPorPonto(mapaFragment, point)
             true
         }
     }
 
+    private fun realizarPesquisaPorPonto(mapaFragment: MapaFragment?, point: Point) {
+        txSelecionarDestino.visibility = View.GONE
+        mapaFragment?.getUserLocation { location ->
+            if (location != null) {
+                mapaFragment.reverseGeocode(ReverseGeoOptions(point), object : SearchCallback {
+                    override fun onResults(results: List<SearchResult>, responseInfo: ResponseInfo) {
+                        val searchPlace = SearchPlace.createFromSearchResult(results.first(), responseInfo)
+                        searchPlaceView.open(searchPlace)
+                        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+                        mapaFragment.addMarker(point.latitude(), point.longitude())
+                    }
+
+                    override fun onError(error: Exception) {
+                        Toast.makeText(requireContext(), "Não foi possível conectar aos serviços da Mapbox. Verifique sua conexão.", Toast.LENGTH_LONG).show()
+                    }
+                })
+            } else {
+                Toast.makeText(requireContext(), "Localização do usuário não disponível", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 }
