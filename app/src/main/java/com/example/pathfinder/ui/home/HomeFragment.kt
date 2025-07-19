@@ -3,6 +3,7 @@ package com.example.pathfinder.ui.home
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -44,6 +45,11 @@ import com.mapbox.search.ui.view.CommonSearchViewConfiguration
 import com.mapbox.search.ui.view.DistanceUnitType
 import com.mapbox.search.ui.view.place.SearchPlace
 import com.mapbox.search.ui.view.place.SearchPlaceBottomSheetView
+import androidx.core.view.isGone
+import androidx.fragment.app.viewModels
+import com.bumptech.glide.Glide
+import com.example.pathfinder.data.models.Usuario
+import com.google.firebase.firestore.FirebaseFirestore
 
 class HomeFragment : Fragment() {
 
@@ -59,6 +65,7 @@ class HomeFragment : Fragment() {
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<LinearLayout>
     private lateinit var destinoAdapter: DestinoAdapter
     private lateinit var txSelecionarDestino: TextView
+    private var usuario: Usuario? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -67,6 +74,12 @@ class HomeFragment : Fragment() {
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
+
+        homeViewModel.carregarUsuarioLogado()
+        homeViewModel.usuarioLogado.observe(viewLifecycleOwner) { usuario ->
+            this.usuario = usuario
+            Toast.makeText(requireContext(), "Usuário: ${usuario?.idUsuario}", Toast.LENGTH_SHORT).show()
+        }
 
         targetIcon = binding.root.findViewById(R.id.ac_target)
         searchPlaceView = binding.root.findViewById(R.id.search_place_view)
@@ -82,6 +95,8 @@ class HomeFragment : Fragment() {
         val peekHeight = navViewHeight + dpToPx(90) // "Pontinha" acima do navView
         val midHeight = (displayMetrics.heightPixels * 0.35).toInt()
         val expandedHeight = (displayMetrics.heightPixels * 0.85).toInt() // Quase tela cheia
+
+        val uiContainer = binding.root.findViewById<View>(R.id.ui_container)
 
         bottomSheetBehavior.peekHeight = peekHeight
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
@@ -115,7 +130,6 @@ class HomeFragment : Fragment() {
                 val btnIniciarRota = requireView().findViewById<View>(R.id.btn_iniciar_rota)
                 when (newState) {
                     BottomSheetBehavior.STATE_HIDDEN -> {
-                        Toast.makeText(requireContext(), "STATE_HIDDEN", Toast.LENGTH_SHORT).show()
                         NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = dpToPx(120)
@@ -123,8 +137,9 @@ class HomeFragment : Fragment() {
                         btnIniciarRota?.visibility = View.GONE
                     }
                     BottomSheetBehavior.STATE_COLLAPSED -> {
-                        Toast.makeText(requireContext(), "STATE_COLLAPSED", Toast.LENGTH_SHORT).show()
-                        NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
+                        if(uiContainer.isGone){
+                            NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
+                        }
                         // Estado colapsado: só a "pontinha" acima do navView
                         bottomSheet.requestLayout()
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
@@ -136,7 +151,6 @@ class HomeFragment : Fragment() {
                         }
                     }
                     BottomSheetBehavior.STATE_EXPANDED -> {
-                        Toast.makeText(requireContext(), "STATE_EXPANDED", Toast.LENGTH_SHORT).show()
                         NavigationViewUtils.esconderBottomNavigationView(requireActivity())
                         bottomSheet.layoutParams.height = midHeight
                         bottomSheet.requestLayout()
@@ -181,6 +195,7 @@ class HomeFragment : Fragment() {
 
         binding.root.findViewById<View>(R.id.btn_iniciar_rota).setOnClickListener{
             esconderComponentes()
+            uiContainer.visibility = View.VISIBLE
             childFragmentManager.commit {
                 replace(R.id.ui_container, RouteFragment())
             }
@@ -260,7 +275,7 @@ class HomeFragment : Fragment() {
                     if (rotaAtual != null) {
                         homeViewModel.adicionarDestinoARotaExistente(destination)
                     } else {
-                        homeViewModel.criarNovaRota(origin, destination, searchPlace.name)
+                        homeViewModel.criarNovaRota(origin, destination, searchPlace.name, usuario?.idUsuario, searchPlace.distanceMeters)
                     }
 
                     val destinos = homeViewModel.obterUltimaRota()?.destinosRota ?: listOf(destination)
@@ -294,6 +309,7 @@ class HomeFragment : Fragment() {
         childFragmentManager.commit {
             replace(R.id.map_container, MapaFragment().getInstance())
         }
+
         // Aguarde o commit e o carregamento do mapa
         view.post {
             adicionarOnMapClickListenerParaPesquisa()
@@ -375,6 +391,21 @@ class HomeFragment : Fragment() {
                 ?.start()
         }
         acTarget.visibility = View.GONE
+    }
+
+    fun mostrarComponentes() {
+        val searchBar = requireView().findViewById<View>(R.id.search_bar)
+        val actionProfile = requireView().findViewById<View>(R.id.action_profile)
+        val btnIniciarRota = requireView().findViewById<View>(R.id.btn_iniciar_rota)
+        val acTarget = requireView().findViewById<View>(R.id.ac_target)
+
+        val uiContainer = requireView().findViewById<View>(R.id.ui_container)
+        uiContainer.visibility = View.GONE
+
+        listOf(searchBar, actionProfile, btnIniciarRota, acTarget).forEach { view ->
+            view?.visibility = View.VISIBLE
+            view?.animate()?.alpha(1f)?.setDuration(300)?.start()
+        }
     }
 
     private fun adicionarOnMapClickListenerParaPesquisa() {

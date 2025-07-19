@@ -6,6 +6,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import android.content.Intent
+import androidx.activity.viewModels
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -17,6 +18,7 @@ import com.example.pathfinder.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.example.pathfinder.ui.rotas.RotaBottomSheetFragment
 import androidx.navigation.ui.NavigationUI
+import com.google.firebase.firestore.FirebaseFirestore
 import com.mapbox.navigation.base.options.NavigationOptions
 import com.mapbox.navigation.core.lifecycle.MapboxNavigationApp
 

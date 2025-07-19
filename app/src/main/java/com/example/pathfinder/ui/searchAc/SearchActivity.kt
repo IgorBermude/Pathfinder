@@ -165,7 +165,7 @@ class SearchActivity : AppCompatActivity() {
                     SearchOptions.Builder()
                         .limit(10)
                         .countries(listOf(IsoCountryCode.BRAZIL))
-                        .origin(userLocation!!)
+                        .proximity(userLocation!!)
                         .build(),
                     object : SearchSelectionCallback {
                         override fun onSuggestions(
@@ -186,6 +186,7 @@ class SearchActivity : AppCompatActivity() {
                                 putExtra("location_name", suggestion.name)
                                 putExtra("latitude", suggestion.coordinate?.latitude())
                                 putExtra("longitude", suggestion.coordinate?.longitude())
+                                putExtra("distanceMeters", suggestion.distanceMeters)
                                 putExtra("search_result", result)
                                 putExtra("response_info", info)
                             }
@@ -218,6 +219,7 @@ class SearchActivity : AppCompatActivity() {
             putString("last_location_name", suggestion.name)
             putFloat("last_lat", suggestion.coordinate?.latitude()?.toFloat() ?: 0f)
             putFloat("last_lng", suggestion.coordinate?.longitude()?.toFloat() ?: 0f)
+            putFloat("last_distance", suggestion.distanceMeters?.toFloat() ?: 0f)
             apply()
         }
     }

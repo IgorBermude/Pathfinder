@@ -1,10 +1,15 @@
 package com.example.pathfinder.ui.home
 
+import android.util.Log
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.pathfinder.data.models.Destino
 import com.example.pathfinder.data.models.Rota
+import com.example.pathfinder.data.models.Usuario
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.mapbox.geojson.Point
 import com.mapbox.search.ApiType
 import com.mapbox.search.SearchEngine
@@ -29,13 +34,13 @@ class HomeViewModel : ViewModel() {
     }
 
     // Cria uma nova rota com origem e primeiro destino
-    fun criarNovaRota(origin: Point, destination: Destino, nomeRota: String?) {
+    fun criarNovaRota(origin: Point, destination: Destino, nomeRota: String, criadorRotaId: String? = null, distanciaRota: Double? = null, tempoTotalRota: Long? = null) {
         val novaRota = Rota(
             origemRota = origin,
             destinosRota = listOf(destination),
-            criadorRota = null, // Preencha com o usuário logado se necessário
-            distanciaRota = null,
-            tempoTotalRota = null,
+            criadorRotaId = criadorRotaId,
+            distanciaRota = distanciaRota,
+            tempoTotalRota = tempoTotalRota,
             dtModificacaoRota = Date(),
             nomeRota = nomeRota
         )
@@ -83,10 +88,35 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    private val _usuarioLogado = MutableLiveData<Usuario?>()
+    val usuarioLogado: LiveData<Usuario?> = _usuarioLogado
+
+    fun carregarUsuarioLogado() {
+        val auth = FirebaseAuth.getInstance()
+        val firestore = FirebaseFirestore.getInstance()
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            val userId = currentUser.uid
+            firestore.collection("usuarios").document(userId).get()
+                .addOnSuccessListener { document ->
+                    if (document != null) {
+                        _usuarioLogado.value = document.toObject(Usuario::class.java)
+                    } else {
+                        _usuarioLogado.value = null
+                    }
+                }
+                .addOnFailureListener {
+                    _usuarioLogado.value = null
+                }
+        } else {
+            _usuarioLogado.value = null
+        }
+    }
+
     // SearchEngine singleton para ser reutilizado
     val searchEngine: SearchEngine by lazy {
         SearchEngine.createSearchEngineWithBuiltInDataProviders(
-            apiType = ApiType.GEOCODING,
+            apiType = ApiType.SEARCH_BOX,
             settings = SearchEngineSettings()
         )
     }

@@ -1,6 +1,6 @@
 package com.example.pathfinder.data.models
 
-data class Endereco(var idEndereco: Int? = null,
+data class Endereco(var idEndereco: String? = null,
                     var paisEndereco: String? = null,
                     var cidadeEndereco: String? = null,
                     var estadoEndereco: String? = null,

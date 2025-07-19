@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.pathfinder.R
+import com.mapbox.search.common.RestrictedMapboxSearchAPI
 import com.mapbox.search.result.SearchSuggestion
 
 class SuggestionsAdapter(
@@ -49,6 +50,7 @@ class SuggestionsAdapter(
         private val cityDistance: TextView = itemView.findViewById(R.id.city_distance)
         private val locationIcon: ImageView = itemView.findViewById(R.id.location_icon)
 
+        @OptIn(RestrictedMapboxSearchAPI::class)
         fun bind(suggestion: SearchSuggestion) {
             System.out.println("Sugestão recebida: $suggestion")
             cityName.text = suggestion.name

@@ -9,9 +9,9 @@ data class Rota(
     var idRota: String? = null,
     var origemRota: Point? = null,
     var destinosRota: List<Destino> = emptyList(),
-    var criadorRota: Usuario? = null,
-    var distanciaRota: Float? = 0f,
-    var tempoTotalRota: String? = "00:00:00",
+    var criadorRotaId: String? = null,
+    var distanciaRota: Double? = null,
+    var tempoTotalRota: Long? = null,
     var dtModificacaoRota: Date? = null,
     var nomeRota: String? = ""
 )
