@@ -10,7 +10,7 @@ import com.example.pathfinder.R
 import com.example.pathfinder.data.models.Rota
 
 class RotaAdapter(
-    private val rotas: List<Rota>,
+    private val rotas: MutableList<Rota>,
     private val onRemove: (Rota) -> Unit
 ) : RecyclerView.Adapter<RotaAdapter.RotaViewHolder>() {
 

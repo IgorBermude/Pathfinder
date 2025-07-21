@@ -49,7 +49,10 @@ import androidx.core.view.isGone
 import androidx.fragment.app.viewModels
 import com.bumptech.glide.Glide
 import com.example.pathfinder.data.models.Usuario
+import com.example.pathfinder.data.repositories.RotaRepository
+import com.example.pathfinder.data.repositories.UsuarioRepository
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.Date
 
 class HomeFragment : Fragment() {
 
@@ -75,10 +78,11 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        homeViewModel.carregarUsuarioLogado()
-        homeViewModel.usuarioLogado.observe(viewLifecycleOwner) { usuario ->
+        val usuarioRepository = UsuarioRepository()
+
+        usuarioRepository.carregarUsuarioLogado()
+        usuarioRepository.usuarioLogado.observe(viewLifecycleOwner) { usuario ->
             this.usuario = usuario
-            Toast.makeText(requireContext(), "Usuário: ${usuario?.idUsuario}", Toast.LENGTH_SHORT).show()
         }
 
         targetIcon = binding.root.findViewById(R.id.ac_target)
@@ -128,13 +132,16 @@ class HomeFragment : Fragment() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 val acTarget = requireView().findViewById<View>(R.id.ac_target)
                 val btnIniciarRota = requireView().findViewById<View>(R.id.btn_iniciar_rota)
+                val btnSalvarRota = requireView().findViewById<View>(R.id.btn_salvar)
                 when (newState) {
                     BottomSheetBehavior.STATE_HIDDEN -> {
                         NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = dpToPx(120)
                         }
-                        btnIniciarRota?.visibility = View.GONE
+                        btnSalvarRota?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                            bottomMargin = dpToPx(120)
+                        }
                     }
                     BottomSheetBehavior.STATE_COLLAPSED -> {
                         if(uiContainer.isGone){
@@ -145,7 +152,9 @@ class HomeFragment : Fragment() {
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = peekHeight + dpToPx(12)
                         }
-                        btnIniciarRota?.visibility = View.VISIBLE
+                        btnSalvarRota?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                            bottomMargin = peekHeight + dpToPx(12)
+                        }
                         btnIniciarRota?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = peekHeight + dpToPx(11)
                         }
@@ -157,7 +166,9 @@ class HomeFragment : Fragment() {
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = midHeight + dpToPx(16)
                         }
-                        btnIniciarRota?.visibility = View.VISIBLE
+                        btnSalvarRota.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                            bottomMargin = midHeight + dpToPx(16)
+                        }
                         btnIniciarRota?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = midHeight + dpToPx(16)
                         }
@@ -177,7 +188,7 @@ class HomeFragment : Fragment() {
 
             if (origem != null && !destinos.isNullOrEmpty()) {
                 mapaFragment?.requestRoutes(origem, destinos){}
-                mapaFragment?.updateCamera(origem, destino.ponto)
+                mapaFragment?.updateCamera(origem, destino.localDestino)
             } else {
                 mapaFragment?.clearRoutes()
             }
@@ -242,6 +253,31 @@ class HomeFragment : Fragment() {
             popupMenu.show()
         }
 
+        // Implementar para mostrar uma mensagem se deseja salvar rota e pedir o nome da rota e apos confirmar, salvar a rota com o rotaRepository
+        binding.root.findViewById<View>(R.id.btn_salvar).setOnClickListener {
+            NavigationViewUtils.mostrarDialogNomeRota({ nomeRota ->
+                val rotaAtual = homeViewModel.obterUltimaRota()
+                if (rotaAtual != null) {
+                    // Atualiza o nome da rota
+                    rotaAtual.nomeRota = nomeRota
+                    rotaAtual.dtModificacaoRota = Date()
+
+                    // Salva a rota no Firestore
+                    val rotaRepository = RotaRepository()
+                    rotaRepository.salvarRota(rotaAtual, {
+                        Toast.makeText(requireContext(), "Rota salva com sucesso", Toast.LENGTH_SHORT).show()
+                    } , { exception->
+                        Toast.makeText(requireContext(), "Erro ao salvar rota: ${exception.message}", Toast.LENGTH_SHORT).show()
+                        Log.e("HomeFragment", "Erro ao salvar rota", exception)
+                    })
+                    homeViewModel.atualizarUltimaRota(rotaAtual)
+
+                } else {
+                    Toast.makeText(requireContext(), "Nenhuma rota para salvar", Toast.LENGTH_SHORT).show()
+                }
+            }, requireActivity())
+        }
+
         binding.root.findViewById<View>(R.id.ac_target).setOnClickListener {
             targetIcon.setImageResource(R.drawable.target_variation)
             targetIcon.setColorFilter(resources.getColor(R.color.blue, null))
@@ -261,8 +297,8 @@ class HomeFragment : Fragment() {
 
         searchPlaceView.addOnNavigateClickListener { searchPlace ->
             val destination = Destino(
-                nome = searchPlace.name ?: "Destino",
-                ponto = searchPlace.coordinate,
+                nomeDestino = searchPlace.name ?: "Destino",
+                localDestino = searchPlace.coordinate,
                 distancia = searchPlace.distanceMeters
             )
             val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
@@ -284,7 +320,7 @@ class HomeFragment : Fragment() {
                         //searchPlaceView.hide()
                         mapaFragment.removeLastMarker()
                     }
-                    mapaFragment.updateCamera(origin, destination.ponto)
+                    mapaFragment.updateCamera(origin, destination.localDestino)
                 } else {
                     Toast.makeText(requireContext(), "Localização do usuário não disponível", Toast.LENGTH_SHORT).show()
                 }
@@ -355,9 +391,16 @@ class HomeFragment : Fragment() {
     private fun showDestinos(destinos: List<Destino>) {
         destinoAdapter.update(destinos)
         val bottomSheet = requireView().findViewById<LinearLayout>(R.id.bottom_sheet_destinos)
+        val btnSalvarRota = requireView().findViewById<View>(R.id.btn_salvar)
+        val btnIniciarRota = requireView().findViewById<View>(R.id.btn_iniciar_rota)
+        val txNomeRota = binding.root.findViewById<TextView>(R.id.tx_nome_rota)
+        val txQtdDestinos = binding.root.findViewById<TextView>(R.id.tx_qtd_destinos)
+        val rotaAtual = homeViewModel.obterUltimaRota()
 
         if (destinos.isEmpty()) {
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            btnSalvarRota.visibility = View.GONE
+            btnIniciarRota.visibility = View.GONE
         } else {
             // Ao mostrar, começa no estado colapsado (meio)
             val displayMetrics = resources.displayMetrics
@@ -365,6 +408,10 @@ class HomeFragment : Fragment() {
             bottomSheet.layoutParams.height = targetHeight
             bottomSheet.requestLayout()
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            btnSalvarRota.visibility = View.VISIBLE
+            btnIniciarRota.visibility = View.VISIBLE
+            txNomeRota.text = rotaAtual?.nomeRota
+            txQtdDestinos.text = rotaAtual?.destinosRota?.size.toString()
         }
     }
 

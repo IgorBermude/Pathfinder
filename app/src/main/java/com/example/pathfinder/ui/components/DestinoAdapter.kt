@@ -28,7 +28,7 @@ class DestinoAdapter(
 
     override fun onBindViewHolder(holder: DestinoViewHolder, position: Int) {
         val destino = destinos[position]
-        holder.nome.text = destino.nome
+        holder.nome.text = destino.nomeDestino
         holder.distancia.text = "Distancia: ${destino.distancia} Km"
         holder.delete.setOnClickListener { onDeleteClick(destino) }
     }

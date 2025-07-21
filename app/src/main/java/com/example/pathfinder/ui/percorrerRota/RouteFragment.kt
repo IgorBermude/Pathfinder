@@ -353,7 +353,7 @@ class RouteFragment : Fragment() {
      * Solicita uma DirectionsRoute válida usando o Map Matching API.
      */
     private fun solicitarDirectionsRouteViaMapMatching(rota: Rota, accessToken: String, onResult: (DirectionsRoute?) -> Unit) {
-        val pontos = listOf(rota.origemRota) + rota.destinosRota.map { it.ponto }
+        val pontos = listOf(rota.origemRota) + rota.destinosRota.map { it.localDestino }
 
         val mapMatchingRequest = MapboxMapMatching.builder()
             .accessToken(accessToken)

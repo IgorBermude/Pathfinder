@@ -42,6 +42,33 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="8dp"/>
 
+    <LinearLayout
+        android:id="@+id/route_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:id="@+id/tx_nome_rota"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nome rota"
+            android:textSize="17sp"
+            android:layout_weight="1"/>
+
+        <TextView
+            android:id="@+id/tx_qtd_destinos"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Qtd. destinos"
+            android:textSize="17sp"
+            android:gravity="end"
+            android:layout_weight="1"/>
+    </LinearLayout>
+
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_destinos"
         android:layout_width="match_parent"

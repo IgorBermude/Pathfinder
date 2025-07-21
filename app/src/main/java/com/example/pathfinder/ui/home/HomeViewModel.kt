@@ -48,7 +48,7 @@ class HomeViewModel : ViewModel() {
     }
 
     // Adiciona uma nova rota à lista
-    fun adicionarRota(rota: Rota) {
+    private fun adicionarRota(rota: Rota) {
         val listaAtual = _rotas.value?.toMutableList() ?: mutableListOf()
         listaAtual.add(rota)
         _rotas.value = listaAtual
@@ -85,31 +85,6 @@ class HomeViewModel : ViewModel() {
                 dtModificacaoRota = Date()
             )
             atualizarUltimaRota(novaRota)
-        }
-    }
-
-    private val _usuarioLogado = MutableLiveData<Usuario?>()
-    val usuarioLogado: LiveData<Usuario?> = _usuarioLogado
-
-    fun carregarUsuarioLogado() {
-        val auth = FirebaseAuth.getInstance()
-        val firestore = FirebaseFirestore.getInstance()
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            val userId = currentUser.uid
-            firestore.collection("usuarios").document(userId).get()
-                .addOnSuccessListener { document ->
-                    if (document != null) {
-                        _usuarioLogado.value = document.toObject(Usuario::class.java)
-                    } else {
-                        _usuarioLogado.value = null
-                    }
-                }
-                .addOnFailureListener {
-                    _usuarioLogado.value = null
-                }
-        } else {
-            _usuarioLogado.value = null
         }
     }
 

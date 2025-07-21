@@ -7,6 +7,9 @@ import com.example.pathfinder.R
 import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
 import com.mapbox.maps.plugin.locationcomponent.location
+import android.app.AlertDialog
+import android.widget.EditText
+import androidx.core.content.ContentProviderCompat.requireContext
 
 object NavigationViewUtils {
     fun esconderBottomNavigationView(activity: FragmentActivity) {
@@ -44,5 +47,22 @@ object NavigationViewUtils {
         mapView.location.addOnIndicatorPositionChangedListener { point ->
             onLocationUpdate(point)
         }
+    }
+
+    fun mostrarDialogNomeRota(onNomeConfirmado: (String) -> Unit, requireContext: FragmentActivity) {
+        val editText = EditText(requireContext)
+        editText.hint = "Digite o nome da rota"
+
+        AlertDialog.Builder(requireContext)
+            .setTitle("Salvar rota")
+            .setView(editText)
+            .setPositiveButton("Salvar") { _, _ ->
+                val nomeRota = editText.text.toString().trim()
+                if (nomeRota.isNotEmpty()) {
+                    onNomeConfirmado(nomeRota)
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 }

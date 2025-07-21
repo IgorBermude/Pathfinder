@@ -515,7 +515,7 @@ class MapaFragment : Fragment() {
         val replayRouteMapper = ReplayRouteMapper()
 
         // A lista começa pelo origin e segue com todos os destinos (convertendo para Point)
-        val points = listOf(origin) + destinos.map { it.ponto }
+        val points = listOf(origin) + destinos.map { it.localDestino }
 
         val routeOptions = RouteOptions.builder()
             .applyDefaultNavigationOptions()
@@ -541,7 +541,7 @@ class MapaFragment : Fragment() {
                         ?: emptyList()
                     // Mapeia os Points retornados para Destinos (mantendo nome e distância se possível)
                     val destinosAtualizados = destinos.mapIndexed { idx, destino ->
-                        if (idx < routeCoordinates.size) destino.copy(ponto = routeCoordinates[idx]) else destino
+                        if (idx < routeCoordinates.size) destino.copy(localDestino = routeCoordinates[idx]) else destino
                     }
                     onRouteReady(destinosAtualizados)
                 }
