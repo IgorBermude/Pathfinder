@@ -13,10 +13,10 @@ import androidx.fragment.app.viewModels
 import com.bumptech.glide.Glide
 import com.example.pathfinder.R
 import com.example.pathfinder.data.models.Usuario
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 class ProfileFragment : Fragment() {
@@ -70,10 +70,11 @@ class ProfileFragment : Fragment() {
         }
     }
 
-    private fun formatDate(date: Date?): String {
+    private fun formatDate(date: Timestamp?): String {
         return if (date != null) {
             val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-            formatter.format(date)
+            val dateObj = date.toDate() // Corrigido: converte Timestamp para Date
+            formatter.format(dateObj)
         } else {
             "Não informado"
         }

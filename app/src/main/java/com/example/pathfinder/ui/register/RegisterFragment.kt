@@ -2,7 +2,6 @@ package com.example.pathfinder.ui.register
 
 import androidx.fragment.app.viewModels
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -17,6 +16,7 @@ import com.example.pathfinder.R
 import com.example.pathfinder.data.AuthViewModel
 import com.example.pathfinder.data.models.Usuario
 import com.example.pathfinder.databinding.FragmentRegisterBinding
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.text.SimpleDateFormat
@@ -69,7 +69,9 @@ class RegisterFragment : Fragment() {
             if (name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && ageInput.isNotEmpty()) {
                 try {
                     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                    val age: Date = dateFormat.parse(ageInput) ?: throw IllegalArgumentException("Data inválida")
+                    val parsedDate: Date = dateFormat.parse(ageInput)
+                        ?: throw IllegalArgumentException("Data inválida")
+                    val age: Timestamp = Timestamp(parsedDate)
                     val usuario = Usuario(nomeUsuario = name, emailUsuario = email, senhaUsuario = password, idadeUsuario = age)
                     lifecycleScope.launch {
                         vm.register(usuario)

@@ -534,6 +534,9 @@ class MapaFragment : Fragment() {
                 ) {
                     mapboxNavigation.setNavigationRoutes(routes)
 
+                    val duration = routes.firstOrNull()?.directionsRoute?.duration()
+                        ?: 0.0
+
                     val routeCoordinates = routes.firstOrNull()
                         ?.directionsRoute
                         ?.geometry()
@@ -568,6 +571,25 @@ class MapaFragment : Fragment() {
                 originPoint,
                 destinationPoint
             ),
+            CameraOptions.Builder()
+                .padding(EdgeInsets(100.0, 100.0, 100.0, 100.0))
+                .build(),
+            null,
+            null,
+            null,
+        )
+
+        mapView.camera.easeTo(
+            overviewOption,
+            mapAnimationOptions
+        )
+    }
+
+    @OptIn(MapboxDelicateApi::class)
+    fun updateCamera(origin: Point, destinationPoint: List<Point>){
+        val mapAnimationOptions = MapAnimationOptions.Builder().duration(1500L).build()
+        val overviewOption = mapView.mapboxMap.cameraForCoordinates(
+            listOf(origin) + destinationPoint,
             CameraOptions.Builder()
                 .padding(EdgeInsets(100.0, 100.0, 100.0, 100.0))
                 .build(),

@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import com.example.pathfinder.data.models.Destino
 import com.example.pathfinder.data.models.Rota
 import com.example.pathfinder.data.models.Usuario
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mapbox.geojson.Point
@@ -41,7 +42,7 @@ class HomeViewModel : ViewModel() {
             criadorRotaId = criadorRotaId,
             distanciaRota = distanciaRota,
             tempoTotalRota = tempoTotalRota,
-            dtModificacaoRota = Date(),
+            dtModificacaoRota = Timestamp.now(),
             nomeRota = nomeRota
         )
         adicionarRota(novaRota)
@@ -69,7 +70,7 @@ class HomeViewModel : ViewModel() {
         if (rotaAtual != null) {
             val novaRota = rotaAtual.copy(
                 destinosRota = rotaAtual.destinosRota + destination,
-                dtModificacaoRota = Date(),
+                dtModificacaoRota = Timestamp.now(),
             )
             atualizarUltimaRota(novaRota)
         }
@@ -82,10 +83,15 @@ class HomeViewModel : ViewModel() {
             val novaLista = rotaAtual.destinosRota.filter { it != destino }
             val novaRota = rotaAtual.copy(
                 destinosRota = novaLista,
-                dtModificacaoRota = Date()
+                dtModificacaoRota = Timestamp.now()
             )
             atualizarUltimaRota(novaRota)
         }
+    }
+
+    // Substitui a rota atual pela rota carregada
+    fun substituirRotaAtual(rota: Rota) {
+        _rotas.value = listOf(rota)
     }
 
     // SearchEngine singleton para ser reutilizado

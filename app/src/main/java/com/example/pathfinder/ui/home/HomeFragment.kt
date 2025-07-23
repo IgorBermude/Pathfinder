@@ -51,8 +51,11 @@ import com.bumptech.glide.Glide
 import com.example.pathfinder.data.models.Usuario
 import com.example.pathfinder.data.repositories.RotaRepository
 import com.example.pathfinder.data.repositories.UsuarioRepository
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
-import java.util.Date
+import com.example.pathfinder.ui.rotas.RotaBottomSheetFragment
+import com.example.pathfinder.ui.rotas.RotaSharedViewModel
+
 
 class HomeFragment : Fragment() {
 
@@ -65,6 +68,7 @@ class HomeFragment : Fragment() {
     private lateinit var targetIcon: ImageView
     private lateinit var searchPlaceView: SearchPlaceBottomSheetView
     private val homeViewModel: HomeViewModel by activityViewModels()
+    private val rotaSharedViewModel: RotaSharedViewModel by activityViewModels()
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<LinearLayout>
     private lateinit var destinoAdapter: DestinoAdapter
     private lateinit var txSelecionarDestino: TextView
@@ -200,7 +204,7 @@ class HomeFragment : Fragment() {
             requireActivity().supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_main) as NavHostFragment
         val navController = navHostFragment.navController
 
-        navController.addOnDestinationChangedListener { _, destination, _ ->
+        navController.addOnDestinationChangedListener { _, _, _ ->
             NavigationViewUtils.toggleActionBarForScreen(requireActivity(), true) // para esconder
         }
 
@@ -260,7 +264,7 @@ class HomeFragment : Fragment() {
                 if (rotaAtual != null) {
                     // Atualiza o nome da rota
                     rotaAtual.nomeRota = nomeRota
-                    rotaAtual.dtModificacaoRota = Date()
+                    rotaAtual.dtModificacaoRota = Timestamp.now()
 
                     // Salva a rota no Firestore
                     val rotaRepository = RotaRepository()
@@ -297,7 +301,7 @@ class HomeFragment : Fragment() {
 
         searchPlaceView.addOnNavigateClickListener { searchPlace ->
             val destination = Destino(
-                nomeDestino = searchPlace.name ?: "Destino",
+                nomeDestino = searchPlace.name,
                 localDestino = searchPlace.coordinate,
                 distancia = searchPlace.distanceMeters
             )
@@ -311,7 +315,7 @@ class HomeFragment : Fragment() {
                     if (rotaAtual != null) {
                         homeViewModel.adicionarDestinoARotaExistente(destination)
                     } else {
-                        homeViewModel.criarNovaRota(origin, destination, searchPlace.name, usuario?.idUsuario, searchPlace.distanceMeters)
+                        homeViewModel.criarNovaRota(origin, destination, searchPlace.name, usuario?.idUsuario, searchPlace.distanceMeters, )
                     }
 
                     val destinos = homeViewModel.obterUltimaRota()?.destinosRota ?: listOf(destination)
@@ -344,6 +348,26 @@ class HomeFragment : Fragment() {
         // Inicializo o MapaFragment
         childFragmentManager.commit {
             replace(R.id.map_container, MapaFragment().getInstance())
+        }
+
+        // Observa rota selecionada do RotaSharedViewModel
+        rotaSharedViewModel.rotaSelecionada.observe(viewLifecycleOwner) { rota ->
+            rota?.let {
+                homeViewModel.substituirRotaAtual(it)
+                val destinos = it.destinosRota.orEmpty()
+                showDestinos(destinos)
+
+                val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
+                if (mapaFragment != null && destinos.isNotEmpty()) {
+                    mapaFragment.getUserLocation { location ->
+                        location?.let { loc ->
+                            val origin = Point.fromLngLat(loc.longitude, loc.latitude)
+                            mapaFragment.requestRoutes(origin, destinos) {}
+                            mapaFragment.updateCamera(origin, destinos.map { d -> d.localDestino })
+                        } ?: Log.w("MapaFragment", "Localização do usuário indisponível")
+                    }
+                }
+            }
         }
 
         // Aguarde o commit e o carregamento do mapa

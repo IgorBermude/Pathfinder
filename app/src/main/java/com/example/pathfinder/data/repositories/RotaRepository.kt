@@ -2,6 +2,7 @@ package com.example.pathfinder.data.repositories
 
 import com.example.pathfinder.data.models.Destino
 import com.example.pathfinder.data.models.Rota
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mapbox.geojson.Point
 
@@ -52,7 +53,7 @@ class RotaRepository {
                         val origemLatitude = origemMap?.get("latitude") as? Double
                         val origemLongitude = origemMap?.get("longitude") as? Double
                         val origemPoint = if (origemLatitude != null && origemLongitude != null) {
-                            com.mapbox.geojson.Point.fromLngLat(origemLongitude, origemLatitude)
+                            Point.fromLngLat(origemLongitude, origemLatitude)
                         } else null
                         // Destinos
                         val destinosList = data["destinosRota"] as? List<*>
@@ -76,7 +77,7 @@ class RotaRepository {
                             criadorRotaId = data["criadorRotaId"] as? String,
                             distanciaRota = data["distanciaRota"] as? Double,
                             tempoTotalRota = (data["tempoTotalRota"] as? Number)?.toLong(),
-                            dtModificacaoRota = data["dtModificacaoRota"] as? java.util.Date,
+                            dtModificacaoRota = data["dtModificacaoRota"] as? Timestamp,
                             nomeRota = data["nomeRota"] as? String
                         )
                     } catch (e: Exception) {
@@ -85,6 +86,17 @@ class RotaRepository {
                 }
                 onSuccess(rotas)
             }
+            .addOnFailureListener { exception -> onFailure(exception) }
+    }
+
+    fun removerRota(
+        rotaId: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        db.collection("rotas").document(rotaId)
+            .delete()
+            .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { exception -> onFailure(exception) }
     }
 }

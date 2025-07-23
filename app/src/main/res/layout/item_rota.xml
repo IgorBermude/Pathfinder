@@ -30,6 +30,14 @@
             android:layout_height="wrap_content"
             android:text="Distância: 10 km" />
 
+        <TextView
+            android:id="@+id/tv_dt_modificacao"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Modificada: 01/01/2024 12:00"
+            android:visibility="gone"
+            android:layout_marginTop="4dp"/>
+
         <Button
             android:id="@+id/btn_remover"
             android:layout_width="wrap_content"
