@@ -19,12 +19,6 @@
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/tv_tempo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Tempo: 30 min" />
-
-        <TextView
             android:id="@+id/tv_distancia"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

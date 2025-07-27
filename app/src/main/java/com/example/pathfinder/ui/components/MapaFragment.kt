@@ -427,7 +427,6 @@ class MapaFragment : Fragment() {
             apply()
         }
     }
-
     fun getInstance(): MapaFragment {
         if (instance == null) {
             instance = MapaFragment()

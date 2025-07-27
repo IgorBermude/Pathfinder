@@ -21,7 +21,7 @@ class RotaAdapter(
 
     inner class RotaViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nome: TextView = itemView.findViewById(R.id.tv_nome)
-        val tempo: TextView = itemView.findViewById(R.id.tv_tempo)
+        //val tempo: TextView = itemView.findViewById(R.id.tv_tempo)
         val distancia: TextView = itemView.findViewById(R.id.tv_distancia)
         val dtModificacao: TextView = itemView.findViewById(R.id.tv_dt_modificacao)
         val btnRemover: Button = itemView.findViewById(R.id.btn_remover)
@@ -36,8 +36,11 @@ class RotaAdapter(
         val rota = rotas[position]
         Log.e("RotaAdapter", "Binding rota: ${rota} at position $position")
         holder.nome.text = rota.nomeRota
-        holder.tempo.text = "Tempo: ${rota.tempoTotalRota}"
-        holder.distancia.text = "Distância: ${rota.distanciaRota}"
+        //holder.tempo.text = "Tempo: ${rota.tempoTotalRota}"
+        holder.distancia.text = rota.distanciaRota
+            ?.div(1000.0)
+            ?.let { "Distância: %.1f km".format(it) }
+            ?: "Distância: Desconhecida"
         // Formata a data se não for nula
         rota.dtModificacaoRota?.toDate()?.let {
             val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())

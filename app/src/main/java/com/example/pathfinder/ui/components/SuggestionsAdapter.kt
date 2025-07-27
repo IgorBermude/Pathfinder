@@ -54,8 +54,8 @@ class SuggestionsAdapter(
         fun bind(suggestion: SearchSuggestion) {
             System.out.println("Sugestão recebida: $suggestion")
             cityName.text = suggestion.name
-            cityRegion.text = suggestion.fullAddress
-            cityDistance.text = suggestion.distanceMeters?.let { String.format("%.1f km", it / 1000) } ?: "Distancia desconhecida"
+            cityRegion.text = suggestion.descriptionText
+            cityDistance.text = suggestion.distanceMeters?.let { String.format("%.1f km", it / 1000) }
 
             // Verifica se o resultado está no histórico
             val lastName = preferences.getString("last_location_name", null)

@@ -29,7 +29,10 @@ class DestinoAdapter(
     override fun onBindViewHolder(holder: DestinoViewHolder, position: Int) {
         val destino = destinos[position]
         holder.nome.text = destino.nomeDestino
-        holder.distancia.text = "Distancia: ${destino.distancia} Km"
+        holder.distancia.text = destino.distancia
+            ?.div(1000.0)
+            ?.let { "Distância: %.1f km".format(it) }
+            ?: "Distância: Desconhecida"
         holder.delete.setOnClickListener { onDeleteClick(destino) }
     }
 
@@ -39,4 +42,8 @@ class DestinoAdapter(
     }
 
     override fun getItemCount(): Int = destinos.size
+
+    fun getDestinos(): List<Destino> {
+        return destinos
+    }
 }

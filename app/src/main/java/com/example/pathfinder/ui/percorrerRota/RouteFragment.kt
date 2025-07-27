@@ -13,6 +13,7 @@ import com.example.pathfinder.R
 import com.example.pathfinder.ui.components.MapaFragment
 import com.example.pathfinder.data.models.Rota
 import com.example.pathfinder.databinding.FragmentRouteBinding
+import com.example.pathfinder.ui.components.DestinoAdapter
 import com.example.pathfinder.ui.home.HomeFragment
 import com.example.pathfinder.ui.home.HomeViewModel
 import com.example.pathfinder.util.NavigationViewUtils
@@ -56,6 +57,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.util.Locale
 import com.mapbox.maps.plugin.locationcomponent.createDefault2DPuck
+import androidx.recyclerview.widget.RecyclerView
 
 class RouteFragment : Fragment() {
     private val homeViewModel: HomeViewModel by activityViewModels()
@@ -192,6 +194,8 @@ class RouteFragment : Fragment() {
         speechApi.generate(voiceInstructions, speechCallback)
     }
 
+    private lateinit var destinoAdapter: DestinoAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -200,7 +204,6 @@ class RouteFragment : Fragment() {
 
     private lateinit var tripProgressCard: View
 
-    @OptIn(ExperimentalPreviewMapboxNavigationAPI::class)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -300,6 +303,17 @@ class RouteFragment : Fragment() {
 
         routeInfoContainer.addView(infoView)
 
+        // Obtenha o destinoAdapter do HomeFragment
+        val homeFragment = requireParentFragment() as? HomeFragment
+        destinoAdapter = homeFragment?.getDestinoAdapter() ?: throw IllegalStateException("DestinoAdapter não encontrado")
+
+        // Verifique se está vazio ao criar a view
+        if (destinoAdapter.getDestinos().isEmpty()) {
+            // Encerra o fragmento imediatamente
+            encerrarFragmento()
+            return binding.root
+        }
+
         // Registre o observer APÓS tudo estar pronto
         // Remova qualquer registro duplicado em outros lugares
         mapaFragment.setRouteProgressObserver(routeProgressObserver)
@@ -347,6 +361,19 @@ class RouteFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        // Observe mudanças na lista de destinos e encerre se ficar vazio
+        destinoAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+            override fun onChanged() {
+                if (destinoAdapter.getDestinos().isEmpty()) {
+                    encerrarFragmento()
+                }
+            }
+            override fun onItemRangeRemoved(positionStart: Int, itemCount: Int) {
+                if (destinoAdapter.getDestinos().isEmpty()) {
+                    encerrarFragmento()
+                }
+            }
+        })
     }
 
     /**
@@ -408,10 +435,16 @@ class RouteFragment : Fragment() {
             enabled = true
         }
 
+        // Remove todas as views do route_info_container para evitar duplicidade
+        val routeInfoContainer = requireActivity().findViewById<ViewGroup>(R.id.route_info_container)
+        routeInfoContainer.removeAllViews()
+
         // Mostra novamente os componentes da HomeFragment
         val homeFragment = requireParentFragment() as? HomeFragment
         homeFragment?.let {
+            mapaFragment.cameraSeguir()
             it.mostrarComponentes()
+            it.adicionarOnMapClickListenerParaPesquisa()
             NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
         }
 

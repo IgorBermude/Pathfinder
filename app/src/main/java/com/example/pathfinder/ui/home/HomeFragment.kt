@@ -74,6 +74,9 @@ class HomeFragment : Fragment() {
     private lateinit var txSelecionarDestino: TextView
     private var usuario: Usuario? = null
 
+    // Variável para armazenar o listener
+    private var mapClickListener: ((Point) -> Boolean)? = null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -117,6 +120,7 @@ class HomeFragment : Fragment() {
                 SearchPlaceBottomSheetView.OPEN -> {
                     txSelecionarDestino.visibility = View.GONE
                     NavigationViewUtils.esconderBottomNavigationView(requireActivity())
+
                 }
                 SearchPlaceBottomSheetView.HIDDEN -> {
                     val destinos = homeViewModel.obterUltimaRota()?.destinosRota ?: emptyList()
@@ -145,6 +149,9 @@ class HomeFragment : Fragment() {
                         }
                         btnSalvarRota?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = dpToPx(120)
+                        }
+                        btnIniciarRota?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                            bottomMargin = dpToPx(119)
                         }
                     }
                     BottomSheetBehavior.STATE_COLLAPSED -> {
@@ -215,6 +222,7 @@ class HomeFragment : Fragment() {
                 replace(R.id.ui_container, RouteFragment())
             }
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            removerOnMapClickListener()
         }
 
         binding.root.findViewById<View>(R.id.search_container).setOnClickListener {
@@ -265,6 +273,7 @@ class HomeFragment : Fragment() {
                     // Atualiza o nome da rota
                     rotaAtual.nomeRota = nomeRota
                     rotaAtual.dtModificacaoRota = Timestamp.now()
+                    rotaAtual.distanciaRota = rotaAtual.destinosRota.sumOf { it.distancia ?: 0.0 }
 
                     // Salva a rota no Firestore
                     val rotaRepository = RotaRepository()
@@ -315,7 +324,7 @@ class HomeFragment : Fragment() {
                     if (rotaAtual != null) {
                         homeViewModel.adicionarDestinoARotaExistente(destination)
                     } else {
-                        homeViewModel.criarNovaRota(origin, destination, searchPlace.name, usuario?.idUsuario, searchPlace.distanceMeters, )
+                        homeViewModel.criarNovaRota(origin, destination, searchPlace.name, usuario?.idUsuario, searchPlace.distanceMeters)
                     }
 
                     val destinos = homeViewModel.obterUltimaRota()?.destinosRota ?: listOf(destination)
@@ -450,18 +459,18 @@ class HomeFragment : Fragment() {
         val actionProfile = requireView().findViewById<View>(R.id.action_profile)
         val btnIniciarRota = requireView().findViewById<View>(R.id.btn_iniciar_rota)
         val acTarget = requireView().findViewById<View>(R.id.ac_target)
+        val btnSalvar = requireView().findViewById<View>(R.id.btn_salvar)
 
         txSelecionarDestino.visibility = View.GONE
 
         // Animação de fade out e esconder
-        listOf(searchBar, actionProfile, btnIniciarRota).forEach { view ->
+        listOf(searchBar, actionProfile, btnIniciarRota, btnSalvar, acTarget).forEach { view ->
             view?.animate()
                 ?.alpha(0f)
                 ?.setDuration(300)
                 ?.withEndAction { view.visibility = View.GONE }
                 ?.start()
         }
-        acTarget.visibility = View.GONE
     }
 
     fun mostrarComponentes() {
@@ -469,21 +478,31 @@ class HomeFragment : Fragment() {
         val actionProfile = requireView().findViewById<View>(R.id.action_profile)
         val btnIniciarRota = requireView().findViewById<View>(R.id.btn_iniciar_rota)
         val acTarget = requireView().findViewById<View>(R.id.ac_target)
+        val btnSalvar = requireView().findViewById<View>(R.id.btn_salvar)
 
         val uiContainer = requireView().findViewById<View>(R.id.ui_container)
         uiContainer.visibility = View.GONE
 
-        listOf(searchBar, actionProfile, btnIniciarRota, acTarget).forEach { view ->
+        listOf(searchBar, actionProfile, btnIniciarRota, acTarget, btnSalvar).forEach { view ->
             view?.visibility = View.VISIBLE
             view?.animate()?.alpha(1f)?.setDuration(300)?.start()
         }
     }
 
-    private fun adicionarOnMapClickListenerParaPesquisa() {
+     fun adicionarOnMapClickListenerParaPesquisa() {
         val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
-        mapaFragment?.setOnMapClickListener { point ->
+        mapClickListener = { point ->
             realizarPesquisaPorPonto(mapaFragment, point)
             true
+        }
+        mapaFragment?.setOnMapClickListener(mapClickListener!!)
+    }
+
+    private fun removerOnMapClickListener(){
+        val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
+        mapClickListener?.let { listener ->
+            mapaFragment?.removeOnMapClickListener(listener)
+            mapClickListener = null
         }
     }
 
@@ -507,5 +526,9 @@ class HomeFragment : Fragment() {
                 Toast.makeText(requireContext(), "Localização do usuário não disponível", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    fun getDestinoAdapter(): DestinoAdapter {
+        return destinoAdapter
     }
 }
