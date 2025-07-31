@@ -11,4 +11,3 @@ data class Usuario(
     var enderecoUsuario: Endereco? = null,
     var localizacaoUsuario: Int? = null,
     var fotoUsuario: String? = null) // URL ou caminho da foto do usuário
-

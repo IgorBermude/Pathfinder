@@ -56,8 +56,10 @@ class ProfileFragment : Fragment() {
                             view.findViewById<TextView>(R.id.endereco).text = usuario.enderecoUsuario?.toString() ?: "Não informado"
                             val imageView = view.findViewById<ImageView>(R.id.imageView)
                             usuario.fotoUsuario?.let {
+                                Log.d("ProfileFragment", "fotoUsuario: $it") // Verifique o valor recebido
                                 Glide.with(view.context)
                                     .load(it)
+                                    .error(R.drawable.ic_profile) // Adicione um erro para fallback
                                     .into(imageView)
                             }
                         }
@@ -65,7 +67,6 @@ class ProfileFragment : Fragment() {
                 }
                 .addOnFailureListener { exception ->
                     Toast.makeText(requireContext(), "Erro ao carregar dados do usuário ${exception.message}", Toast.LENGTH_SHORT).show()
-                    Log.e("ProfileFragment", "Erro ao carregar dados do usuário: ${exception.message}", exception)
                 }
         }
     }
