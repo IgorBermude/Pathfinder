@@ -32,4 +32,21 @@ class UsuarioRepository {
             _usuarioLogado.value = null
         }
     }
+
+    fun adicionarFotoPerfilAoUsuario(usuario: Usuario, fotoUrl: String, onResult: (Boolean) -> Unit) {
+        val auth = FirebaseAuth.getInstance()
+        val firestore = FirebaseFirestore.getInstance()
+        val userId = auth.currentUser?.uid ?: return
+
+        firestore.collection("usuarios").document(userId)
+            .update("fotoUsuario", fotoUrl)
+            .addOnSuccessListener {
+                usuario.fotoUsuario = fotoUrl
+                _usuarioLogado.value = usuario
+                onResult(true)
+            }
+            .addOnFailureListener {
+                onResult(false)
+            }
+    }
 }

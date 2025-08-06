@@ -20,14 +20,10 @@ import com.example.pathfinder.R
 import com.example.pathfinder.data.AuthViewModel
 import com.example.pathfinder.data.models.Usuario
 import com.example.pathfinder.databinding.FragmentRegisterBinding
-import com.google.firebase.Timestamp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.storage.FirebaseStorage
+import com.example.pathfinder.util.AndroidUtil
+import com.example.pathfinder.util.funcoesUteis
+import com.github.dhaval2404.imagepicker.ImagePicker
 import kotlinx.coroutines.launch
-import java.util.Date
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.UUID
 
 class RegisterFragment : Fragment() {
     private var binding: FragmentRegisterBinding? = null
@@ -68,68 +64,48 @@ class RegisterFragment : Fragment() {
             }
         }
 
-        binding?.btnSelecionarFoto?.setOnClickListener {
-            val intent = Intent(Intent.ACTION_PICK)
-            intent.type = "image/*"
-            startActivityForResult(intent, 101)
-        }
-
         binding?.btnLogin?.setOnClickListener {
             val name = binding?.etName?.text.toString()
             val email = binding?.etEmail?.text.toString()
             val password = binding?.etPassword?.text.toString()
             val ageInput = binding?.etAge?.text.toString()
-            val localFotoUri = fotoUri // Uri da imagem selecionada do dispositivo
 
-            if (name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && ageInput.isNotEmpty() && localFotoUri != null) {
-                try {
-                    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                    val parsedDate = dateFormat.parse(ageInput) ?: throw IllegalArgumentException("Data inválida")
-                    val age = Timestamp(parsedDate)
+            if (!validarCampos(name, email, password, ageInput)) {
+                Toast.makeText(requireContext(), "Preencha todos os campos", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-                    // Gere um nome único para a imagem
-                    val fotoNome = UUID.randomUUID().toString() + ".jpg"
-                    val storageRef = FirebaseStorage.getInstance().reference.child("usuarios/$fotoNome")
-
-                    // 1. Upload da imagem para o Firebase Storage
-                    storageRef.putFile(localFotoUri)
-                        .addOnSuccessListener {
-                            // 2. Obtem a URL pública da imagem
-                            storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
-                                val usuario = Usuario(
-                                    nomeUsuario = name,
-                                    emailUsuario = email,
-                                    senhaUsuario = password,
-                                    idadeUsuario = age,
-                                    fotoUsuario = downloadUrl.toString() // Salva a URL da imagem
-                                )
-                                // 3. Chama a função de registro com a imagem correta
-                                lifecycleScope.launch {
-                                    vm.register(usuario)
-                                }
-                            }
-                        }
-                        .addOnFailureListener {
-                            Toast.makeText(requireContext(), "Erro ao fazer upload da foto", Toast.LENGTH_SHORT).show()
-                            Log.e("RegisterFragment", "Erro ao fazer upload da foto: ${it.message}")
-                        }
-
-                } catch (e: Exception) {
-                    Toast.makeText(requireContext(), "Formato de data inválido. Use dd/MM/yyyy.", Toast.LENGTH_SHORT).show()
+            lifecycleScope.launch {
+                val age = funcoesUteis.parseDate(ageInput)
+                if (age == null) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Formato de data inválido. Use dd/MM/yyyy.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@launch
                 }
-            } else {
-                Toast.makeText(requireContext(), "Preencha todos os campos e selecione uma foto", Toast.LENGTH_SHORT).show()
+
+                val usuario = Usuario(
+                    nomeUsuario = name,
+                    emailUsuario = email,
+                    senhaUsuario = password,
+                    idadeUsuario = age,
+                    fotoUsuario = null
+                )
+
+                try {
+                    vm.register(usuario)
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Erro ao registrar usuário. Tente novamente.", Toast.LENGTH_SHORT).show()
+                    Log.e("RegisterFragment", "Erro genérico: ${e.message}", e)
+                }
             }
         }
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 101 && resultCode == Activity.RESULT_OK) {
-            fotoUri = data?.data
-            binding?.ivFotoUsuario?.setImageURI(fotoUri)
-        }
+    private fun validarCampos(name: String, email: String, password: String, ageInput: String): Boolean {
+        return name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && ageInput.isNotEmpty()
     }
 
     override fun onDestroyView() {

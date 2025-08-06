@@ -6,8 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.pathfinder.LoginUiState
 import com.example.pathfinder.data.models.Usuario
 import com.example.pathfinder.data.repositories.AuthenticationFirebaseRepository
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.ktx.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +36,18 @@ class AuthViewModel(private val db: AuthenticationFirebaseRepository): ViewModel
     fun register(usuario: Usuario) {
         viewModelScope.launch {
             db.createUserWithEmailAndPassword(usuario).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    _authUiState.value = LoginUiState.SUCCESS
+                } else {
+                    _authUiState.value = LoginUiState.ERROR
+                }
+            }
+        }
+    }
+
+    fun alterar(usuario: Usuario) {
+        viewModelScope.launch {
+            db.updateUser(usuario).addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     _authUiState.value = LoginUiState.SUCCESS
                 } else {

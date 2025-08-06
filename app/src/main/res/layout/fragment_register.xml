@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".ui.register.RegisterFragment">
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
 
 
     <TextView
@@ -22,18 +18,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="@dimen/text_title_register_screen_margin_top"
-        />
-
-    <Button
-        android:id="@+id/btnSelecionarFoto"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Adicionar foto"
-        app:layout_constraintTop_toBottomOf="@id/ivFotoUsuario"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/background_button"
         />
 
     <!-- NAME SESSION !-->
@@ -143,7 +127,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/tilPassword"
         app:layout_constraintStart_toStartOf="@id/tilEmail"
-        android:text="@string/idade"
+        android:text="@string/data_nascimento"
         android:textSize="@dimen/tv_name_text_size_register_screen"
         android:layout_marginTop="@dimen/tv_register_screen_margin_top"
         />
@@ -164,54 +148,27 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:inputType="text"
-            android:hint="Sua idade (dd/MM/yyyy)"
+            android:hint="Data de nascimento (dd/MM/yyyy)"
             android:maxLength="10" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <TextView
-        android:id="@+id/tvImage"
-        android:layout_width="wrap_content"
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnLogin"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/tilAge"
-        app:layout_constraintStart_toStartOf="@id/tilPassword"
-        android:text="@string/foto_usuario"
-        android:textSize="@dimen/tv_name_text_size_register_screen"
-        android:layout_marginTop="@dimen/tv_register_screen_margin_top"
-        />
-
-    <!-- FOTO USUÁRIO -->
-    <ImageView
-        android:id="@+id/ivFotoUsuario"
-        android:layout_width="96dp"
-        android:layout_height="96dp"
-        android:layout_marginTop="24dp"
-        android:scaleType="centerCrop"
-        android:background="@drawable/circle_background"
-        app:layout_constraintTop_toBottomOf="@id/tvImage"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="@dimen/login_button_welcome_screen_margin_top"
+        android:layout_marginTop="48dp"
+        android:layout_marginEnd="@dimen/login_button_welcome_screen_margin_top"
+        android:background="@drawable/custom_button_background"
+        android:padding="@dimen/btn_create_register_screen_padding"
+        android:text="@string/create_btn"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="@dimen/btn_login_text_size"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnLogin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/login_button_welcome_screen_margin_top"
-            android:layout_marginTop="40dp"
-            android:layout_marginEnd="40dp"
-            android:layout_marginBottom="40dp"
-            android:background="@drawable/custom_button_background"
-            android:padding="@dimen/btn_create_register_screen_padding"
-            android:text="@string/create_btn"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="@dimen/btn_login_text_size"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btnSelecionarFoto" />
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tilAge" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-</ScrollView>

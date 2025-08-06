@@ -24,7 +24,7 @@
     <string name="password">Senha</string>
     <string name="your_password">Sua senha</string>
     <string name="phone">Telefone</string>
-    <string name="idade">Idade</string>
+    <string name="data_nascimento">Data de nascimento</string>
     <string name="your_phone">Seu telefone</string>
     <string name="sua_idade">Sua idade</string>
     <string name="create_btn">Criar</string>
