@@ -39,9 +39,11 @@
 
                     <ImageView
                         android:id="@+id/imageView"
+                        android:background="@drawable/circle_background"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="32dp"
+                        android:scaleType="centerCrop"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -91,7 +93,9 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_margin="10dp"
+                            android:layout_marginEnd="10dp"
+                            android:layout_marginStart="10dp"
+                            android:layout_marginTop="10dp"
                             android:orientation="horizontal">
 
                             <TextView
@@ -115,6 +119,17 @@
 
                         </LinearLayout>
 
+                        <TextView
+                            android:id="@+id/editarSenha"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="20dp"
+                            android:layout_gravity="end"
+                            android:text="Editar"
+                            android:textAlignment="viewEnd"
+                            android:textColor="#182693"
+                            android:textSize="13sp" />
+
                         <View
                             android:id="@+id/view5"
                             android:layout_width="match_parent"
@@ -125,7 +140,9 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_margin="10dp"
+                            android:layout_marginEnd="10dp"
+                            android:layout_marginStart="10dp"
+                            android:layout_marginTop="10dp"
                             android:orientation="horizontal">
 
                             <TextView
@@ -149,6 +166,17 @@
 
                         </LinearLayout>
 
+                        <TextView
+                            android:id="@+id/editarEmail"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="20dp"
+                            android:layout_gravity="end"
+                            android:text="Editar"
+                            android:textAlignment="viewEnd"
+                            android:textColor="#182693"
+                            android:textSize="13sp" />
+
                         <View
                             android:id="@+id/view6"
                             android:layout_width="match_parent"
@@ -159,7 +187,9 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_margin="10dp"
+                            android:layout_marginEnd="10dp"
+                            android:layout_marginStart="10dp"
+                            android:layout_marginTop="10dp"
                             android:orientation="horizontal">
 
                             <TextView
@@ -183,6 +213,17 @@
 
                         </LinearLayout>
 
+                        <TextView
+                            android:id="@+id/editarIdade"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="20dp"
+                            android:layout_gravity="end"
+                            android:text="Editar"
+                            android:textAlignment="viewEnd"
+                            android:textColor="#182693"
+                            android:textSize="13sp" />
+
                         <View
                             android:id="@+id/view7"
                             android:layout_width="match_parent"
@@ -192,8 +233,10 @@
 
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="23dp"
-                            android:layout_margin="10dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginEnd="10dp"
+                            android:layout_marginStart="10dp"
+                            android:layout_marginTop="10dp"
                             android:orientation="horizontal">
 
                             <TextView
@@ -217,6 +260,17 @@
 
                         </LinearLayout>
 
+                        <TextView
+                            android:id="@+id/editarNomeUsuario"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="20dp"
+                            android:layout_gravity="end"
+                            android:text="Editar"
+                            android:textAlignment="viewEnd"
+                            android:textColor="#182693"
+                            android:textSize="13sp" />
+
                         <View
                             android:id="@+id/view8"
                             android:layout_width="match_parent"
@@ -227,7 +281,9 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:layout_margin="10dp"
+                            android:layout_marginEnd="10dp"
+                            android:layout_marginStart="10dp"
+                            android:layout_marginTop="10dp"
                             android:orientation="horizontal">
 
                             <TextView
@@ -251,20 +307,65 @@
 
                         </LinearLayout>
 
+                        <TextView
+                            android:id="@+id/editarEndereco"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="20dp"
+                            android:layout_gravity="end"
+                            android:text="Editar"
+                            android:textAlignment="viewEnd"
+                            android:textColor="#182693"
+                            android:textSize="13sp" />
+
                     </LinearLayout>
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <Button
-                android:id="@+id/btn_editar_profile"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="24dp"
-                android:background="@drawable/background_button"
-                android:text="Editar Perfil" />
+                android:layout_height="100dp"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:layout_marginBottom="25dp">
+                <Button
+                    android:id="@+id/btn_editar_profile"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="24dp"
+                    android:background="@drawable/background_button"
+                    android:text="Editar Perfil" />
+                <ProgressBar
+                    android:layout_width="32dp"
+                    android:layout_height="wrap_content"
+                    android:indeterminateTint="@color/verde_padrao"
+                    android:layout_gravity="center"
+                    android:visibility="gone"
+                    android:id="@+id/profile_progress_bar"/>
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Botão de voltar -->
+        <ImageButton
+            android:id="@+id/btn_voltar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="25dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Voltar"
+            android:src="@drawable/ic_arrow_back2"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 </FrameLayout>

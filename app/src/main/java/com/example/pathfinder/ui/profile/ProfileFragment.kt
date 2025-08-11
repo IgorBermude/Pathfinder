@@ -2,13 +2,18 @@ package com.example.pathfinder.ui.profile
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -22,15 +27,18 @@ import com.example.pathfinder.data.AuthViewModel
 import com.example.pathfinder.data.models.Usuario
 import com.example.pathfinder.util.AndroidUtil
 import com.example.pathfinder.util.FirebaseUtil
-import com.example.pathfinder.util.funcoesUteis
+import com.example.pathfinder.util.NavigationViewUtils
+import com.example.pathfinder.util.FuncoesUteis
 import com.github.dhaval2404.imagepicker.ImagePicker
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
+import android.view.inputmethod.InputMethodManager
+
 
 class ProfileFragment : Fragment() {
 
@@ -44,6 +52,10 @@ class ProfileFragment : Fragment() {
     private lateinit var imagePickLauncher: ActivityResultLauncher<Intent>
     private var selectedImageUri: Uri? = null
     private val authViewModel: AuthViewModel by activityViewModels { AuthViewModel.Factory }
+    var editarUsuarioBtn: Button? = null
+    var progressBar: ProgressBar? = null
+    var imageBase64: String? = null
+    var usuarioAtual: Usuario? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,6 +63,7 @@ class ProfileFragment : Fragment() {
     ): View {
         val view = inflater.inflate(R.layout.fragment_profile, container, false)
         setUserData(view)
+        NavigationViewUtils.esconderBottomNavigationView(requireActivity())
         return view
     }
 
@@ -78,6 +91,71 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        editarUsuarioBtn = view.findViewById(R.id.btn_editar_profile)
+        progressBar = view.findViewById(R.id.profile_progress_bar)
+
+        val nomeUsuarioTxt = view.findViewById<TextView>(R.id.nomeUsuario)
+        val emailTxt = view.findViewById<TextView>(R.id.email)
+        val senhaTxt = view.findViewById<TextView>(R.id.senha)
+        val idadeTxt = view.findViewById<TextView>(R.id.idade)
+        val enderecoTxt = view.findViewById<TextView>(R.id.endereco)
+
+        val editarSenhaTxt = view.findViewById<TextView>(R.id.editarSenha)
+        val editarEmailTxt = view.findViewById<TextView>(R.id.editarEmail)
+        val editarIdadeTxt = view.findViewById<TextView>(R.id.editarIdade)
+        val editarNomeUsuarioTxt = view.findViewById<TextView>(R.id.editarNomeUsuario)
+        val editarEnderecoTxt = view.findViewById<TextView>(R.id.editarEndereco)
+
+        editarSenhaTxt.setOnClickListener {
+            editarSenhaTxt.visibility = View.INVISIBLE
+            val parent = senhaTxt.parent as ViewGroup
+            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, senhaTxt)
+            editarCampoTexto(editText, parent, senhaTxt, editarSenhaTxt)
+        }
+        editarEmailTxt.setOnClickListener {
+            editarEmailTxt.visibility = View.INVISIBLE
+            val parent = emailTxt.parent as ViewGroup
+            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, emailTxt)
+            editarCampoTexto(editText, parent, emailTxt, editarEmailTxt)
+        }
+        editarIdadeTxt.setOnClickListener {
+            editarIdadeTxt.visibility = View.INVISIBLE
+            val parent = idadeTxt.parent as ViewGroup
+            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, idadeTxt)
+            editarCampoTexto(editText, parent, idadeTxt, editarIdadeTxt)
+        }
+        editarNomeUsuarioTxt.setOnClickListener {
+            editarNomeUsuarioTxt.visibility = View.INVISIBLE
+            val parent = nomeUsuarioTxt.parent as ViewGroup
+            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, nomeUsuarioTxt)
+            editarCampoTexto(editText, parent, nomeUsuarioTxt, editarNomeUsuarioTxt)
+        }
+        editarEnderecoTxt.setOnClickListener {
+            editarEnderecoTxt.visibility = View.INVISIBLE
+            val parent = enderecoTxt.parent as ViewGroup
+            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, enderecoTxt)
+            editarCampoTexto(editText, parent, enderecoTxt, editarEnderecoTxt)
+        }
+
+        // Botão de voltar com animação
+        view.findViewById<ImageButton>(R.id.btn_voltar).setOnClickListener { btn ->
+            btn.animate()
+                .scaleX(0.85f)
+                .scaleY(0.85f)
+                .setDuration(100)
+                .withEndAction {
+                    btn.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .withEndAction {
+                            requireActivity().onBackPressedDispatcher.onBackPressed()
+                        }
+                        .start()
+                }
+                .start()
+        }
+
         view.findViewById<ImageView>(R.id.imageView).setOnClickListener {
             ImagePicker.with(this).cropSquare().compress(512).maxResultSize(512,512)
                 .createIntent { intent ->
@@ -86,8 +164,11 @@ class ProfileFragment : Fragment() {
         }
 
         view.findViewById<TextView>(R.id.btn_editar_profile).setOnClickListener {
-            val imageBase64 = selectedImageUri?.let {
-                FirebaseUtil.uriToBase64(requireContext(), it)
+            setInProgress(true)
+            if(selectedImageUri != null) {
+                imageBase64 = selectedImageUri?.let {
+                    FirebaseUtil.uriToBase64(requireContext(), it)
+                }
             }
 
             // Pega os dados atuais dos campos
@@ -102,8 +183,8 @@ class ProfileFragment : Fragment() {
                 nomeUsuario = nome,
                 emailUsuario = email,
                 senhaUsuario = senha,
-                idadeUsuario = funcoesUteis.parseDate(idadeStr), // ajuste se necessário
-                fotoUsuario = imageBase64
+                idadeUsuario = FuncoesUteis.parseDate(idadeStr), // ajuste se necessário
+                fotoUsuario = imageBase64 ?: usuarioAtual?.fotoUsuario
             )
 
             authViewModel.alterar(usuario)
@@ -114,9 +195,12 @@ class ProfileFragment : Fragment() {
                     when (state) {
                         com.example.pathfinder.LoginUiState.SUCCESS -> {
                             Toast.makeText(requireContext(), "Perfil atualizado com sucesso!", Toast.LENGTH_SHORT).show()
+                            setInProgress(false)
+                            setUserData(requireView())
                         }
                         com.example.pathfinder.LoginUiState.ERROR -> {
                             Toast.makeText(requireContext(), "Erro ao atualizar perfil.", Toast.LENGTH_SHORT).show()
+                            setInProgress(false)
                         }
                         else -> {}
                     }
@@ -129,6 +213,35 @@ class ProfileFragment : Fragment() {
         }
     }
 
+    private fun editarCampoTexto(editText: EditText, parent: ViewGroup, textView: TextView, clickedText: TextView) {
+        editText.isFocusableInTouchMode = true
+        editText.isFocusable = true
+        editText.requestFocus()
+        editText.setSelection(editText.text.length)
+        val imm = requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        imm.showSoftInput(editText, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+
+        // Quando o usuário pressionar Enter ou sair do campo, transforma de volta em TextView
+        editText.setOnEditorActionListener { v, actionId, event ->
+            // Funciona corretamente
+            FuncoesUteis.trocarEditTextPorTextView(parent, editText, textView)
+            true
+        }
+        editText.setOnFocusChangeListener { v, hasFocus ->
+            if (!hasFocus) {
+                v.postDelayed({
+                    // Verifica se o editText ainda está no parent antes de tentar trocar
+                    if (parent.indexOfChild(editText) != -1) {
+                        FuncoesUteis.trocarEditTextPorTextView(parent, editText, textView)
+                    }
+                }, 100)
+            }
+            clickedText.visibility = View.VISIBLE
+        }
+        // Removido o uso de clearFocusOnKeyboardClose para evitar NPE
+        editText.clearFocusOnKeyboardClose(requireActivity())
+    }
+
     private fun setUserData(view: View) {
         val currentUser = auth.currentUser
         if (currentUser != null) {
@@ -136,21 +249,27 @@ class ProfileFragment : Fragment() {
             firestore.collection("usuarios").document(userId).get()
                 .addOnSuccessListener { document ->
                     if (document != null) {
-                        val usuario = document.toObject(Usuario::class.java)
-                        if (usuario != null) {
-                            view.findViewById<TextView>(R.id.textView2).text = usuario.nomeUsuario
-                            view.findViewById<TextView>(R.id.textView3).text = usuario.emailUsuario
-                            view.findViewById<TextView>(R.id.senha).text = usuario.senhaUsuario // Ocultar senha
-                            view.findViewById<TextView>(R.id.email).text = usuario.emailUsuario
-                            view.findViewById<TextView>(R.id.idade).text = formatDate(usuario.idadeUsuario)
-                            view.findViewById<TextView>(R.id.nomeUsuario).text = usuario.nomeUsuario
-                            view.findViewById<TextView>(R.id.endereco).text = usuario.enderecoUsuario?.toString() ?: "Não informado"
+                        usuarioAtual = document.toObject(Usuario::class.java)
+                        if (usuarioAtual != null) {
+                            view.findViewById<TextView>(R.id.textView2).text = usuarioAtual?.nomeUsuario
+                            view.findViewById<TextView>(R.id.textView3).text = usuarioAtual?.emailUsuario
+                            view.findViewById<TextView>(R.id.senha).text = usuarioAtual?.senhaUsuario // Ocultar senha
+                            view.findViewById<TextView>(R.id.email).text = usuarioAtual?.emailUsuario
+                            view.findViewById<TextView>(R.id.idade).text = formatDate(usuarioAtual?.idadeUsuario)
+                            view.findViewById<TextView>(R.id.nomeUsuario).text = usuarioAtual?.nomeUsuario
+                            view.findViewById<TextView>(R.id.endereco).text = usuarioAtual?.enderecoUsuario?.toString() ?: "Não informado"
                             val imageView = view.findViewById<ImageView>(R.id.imageView)
-                            if (!usuario.fotoUsuario.isNullOrEmpty()) {
-                                val bitmap = FirebaseUtil.base64ToBitmap(usuario.fotoUsuario!!)
-                                imageView.setImageBitmap(bitmap)
+                            if (!usuarioAtual?.fotoUsuario.isNullOrEmpty()) {
+                                imageBase64 = usuarioAtual?.fotoUsuario
+                                val bitmap = FirebaseUtil.base64ToBitmap(usuarioAtual?.fotoUsuario!!)
+                                Glide.with(view.context)
+                                    .load(bitmap)
+                                    .circleCrop()
+                                    .override(512, 512) // Ajuste o tamanho do círculo aqui (exemplo: 128x128 px)
+                                    .into(imageView)
                             } else {
                                 imageView.setImageResource(R.drawable.ic_profile)
+
                             }
                         }
                     }
@@ -169,5 +288,51 @@ class ProfileFragment : Fragment() {
         } else {
             "Não informado"
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
+    }
+
+    fun setInProgress(inProgress: Boolean) {
+        if (inProgress) {
+            progressBar?.visibility = View.VISIBLE
+            editarUsuarioBtn?.visibility = View.GONE
+        } else {
+            progressBar?.visibility = View.GONE
+            editarUsuarioBtn?.visibility = View.VISIBLE
+        }
+    }
+
+    fun EditText.clearFocusOnKeyboardClose(activity: Activity) {
+        val rootView = activity.window.decorView
+
+        rootView.viewTreeObserver.addOnGlobalLayoutListener(object :
+            ViewTreeObserver.OnGlobalLayoutListener {
+            private var isKeyboardVisible = false
+
+            override fun onGlobalLayout() {
+                val rect = Rect()
+                rootView.getWindowVisibleDisplayFrame(rect)
+                val screenHeight = rootView.height
+                val keypadHeight = screenHeight - rect.bottom
+
+                val keyboardNowVisible = keypadHeight > screenHeight * 0.15
+
+                if (isKeyboardVisible && !keyboardNowVisible) {
+                    // Teclado foi fechado
+                    this@clearFocusOnKeyboardClose.clearFocus()
+                    hideKeyboard(activity, this@clearFocusOnKeyboardClose)
+                }
+
+                isKeyboardVisible = keyboardNowVisible
+            }
+        })
+    }
+
+    private fun hideKeyboard(activity: Activity, view: View) {
+        val imm = activity.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
     }
 }

@@ -1,8 +1,6 @@
 package com.example.pathfinder.ui.register
 
 import androidx.fragment.app.viewModels
-import android.app.Activity
-import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -20,9 +18,7 @@ import com.example.pathfinder.R
 import com.example.pathfinder.data.AuthViewModel
 import com.example.pathfinder.data.models.Usuario
 import com.example.pathfinder.databinding.FragmentRegisterBinding
-import com.example.pathfinder.util.AndroidUtil
-import com.example.pathfinder.util.funcoesUteis
-import com.github.dhaval2404.imagepicker.ImagePicker
+import com.example.pathfinder.util.FuncoesUteis
 import kotlinx.coroutines.launch
 
 class RegisterFragment : Fragment() {
@@ -76,7 +72,7 @@ class RegisterFragment : Fragment() {
             }
 
             lifecycleScope.launch {
-                val age = funcoesUteis.parseDate(ageInput)
+                val age = FuncoesUteis.parseDate(ageInput)
                 if (age == null) {
                     Toast.makeText(
                         requireContext(),
