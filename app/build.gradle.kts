@@ -93,6 +93,9 @@ dependencies {
     implementation("com.mapbox.navigationcore:ui-components:3.9.2")
     implementation("com.mapbox.navigationcore:android-auto-components:3.9.2")
 
+    // Picasso for image loading
+    implementation("com.squareup.picasso:picasso:2.8")
+
     implementation(libs.androidx.legacy.support.v4)
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.auth)

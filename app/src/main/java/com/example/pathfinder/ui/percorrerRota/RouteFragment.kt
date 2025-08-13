@@ -65,6 +65,7 @@ class RouteFragment : Fragment() {
     private var rota: Rota? = null
     private var _binding: FragmentRouteBinding? = null
     private val binding get() = _binding!!
+    private lateinit var dataObserver: RecyclerView.AdapterDataObserver
 
     private companion object {
         private const val BUTTON_ANIMATION_DURATION = 1500L
@@ -361,8 +362,7 @@ class RouteFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // Observe mudanças na lista de destinos e encerre se ficar vazio
-        destinoAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+        dataObserver = object : RecyclerView.AdapterDataObserver() {
             override fun onChanged() {
                 if (destinoAdapter.getDestinos().isEmpty()) {
                     encerrarFragmento()
@@ -373,7 +373,8 @@ class RouteFragment : Fragment() {
                     encerrarFragmento()
                 }
             }
-        })
+        }
+        destinoAdapter.registerAdapterDataObserver(dataObserver)
     }
 
     /**
@@ -456,6 +457,7 @@ class RouteFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        destinoAdapter.unregisterAdapterDataObserver(dataObserver)
         // Remova o observer apenas aqui
         mapaFragment.removeRouteProgressObserver(routeProgressObserver)
         mapaFragment.removeVoiceInstructionsObserver(voiceInstructionsObserver)

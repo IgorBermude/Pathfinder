@@ -34,9 +34,6 @@ import com.example.pathfinder.util.NavigationViewUtils
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.auth.FirebaseAuth
 import com.mapbox.geojson.Point
-import com.mapbox.maps.plugin.gestures.addOnMapClickListener
-import com.mapbox.maps.plugin.gestures.gestures
-import com.mapbox.maps.plugin.gestures.removeOnMapClickListener
 import com.mapbox.search.ResponseInfo
 import com.mapbox.search.ReverseGeoOptions
 import com.mapbox.search.SearchCallback
@@ -46,15 +43,13 @@ import com.mapbox.search.ui.view.DistanceUnitType
 import com.mapbox.search.ui.view.place.SearchPlace
 import com.mapbox.search.ui.view.place.SearchPlaceBottomSheetView
 import androidx.core.view.isGone
-import androidx.fragment.app.viewModels
 import com.bumptech.glide.Glide
 import com.example.pathfinder.data.models.Usuario
 import com.example.pathfinder.data.repositories.RotaRepository
 import com.example.pathfinder.data.repositories.UsuarioRepository
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.FirebaseFirestore
-import com.example.pathfinder.ui.rotas.RotaBottomSheetFragment
 import com.example.pathfinder.ui.rotas.RotaSharedViewModel
+import com.example.pathfinder.util.FirebaseUtil
 
 
 class HomeFragment : Fragment() {
@@ -90,6 +85,7 @@ class HomeFragment : Fragment() {
         usuarioRepository.carregarUsuarioLogado()
         usuarioRepository.usuarioLogado.observe(viewLifecycleOwner) { usuario ->
             this.usuario = usuario
+            setarImgemUsuario(usuario, root)
         }
 
         targetIcon = binding.root.findViewById(R.id.ac_target)
@@ -110,7 +106,7 @@ class HomeFragment : Fragment() {
         val uiContainer = binding.root.findViewById<View>(R.id.ui_container)
 
         bottomSheetBehavior.peekHeight = peekHeight
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        //bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
 
         txSelecionarDestino = binding.root.findViewById(R.id.tx_selecione_destino)
 
@@ -143,8 +139,9 @@ class HomeFragment : Fragment() {
                 val btnSalvarRota = requireView().findViewById<View>(R.id.btn_salvar)
                 when (newState) {
                     BottomSheetBehavior.STATE_HIDDEN -> {
+                        Toast.makeText(requireContext(), "STATE_HIDDEN", Toast.LENGTH_SHORT).show()
                         NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
-                        acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                        /*acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = dpToPx(120)
                         }
                         btnSalvarRota?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
@@ -152,9 +149,10 @@ class HomeFragment : Fragment() {
                         }
                         btnIniciarRota?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = dpToPx(119)
-                        }
+                        }*/
                     }
                     BottomSheetBehavior.STATE_COLLAPSED -> {
+                        Toast.makeText(requireContext(), "STATE_COLLAPSED", Toast.LENGTH_SHORT).show()
                         if(uiContainer.isGone){
                             NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
                         }
@@ -171,8 +169,9 @@ class HomeFragment : Fragment() {
                         }
                     }
                     BottomSheetBehavior.STATE_EXPANDED -> {
+                        Toast.makeText(requireContext(), "STATE_EXPANDED", Toast.LENGTH_SHORT).show()
                         NavigationViewUtils.esconderBottomNavigationView(requireActivity())
-                        bottomSheet.layoutParams.height = midHeight
+                        //bottomSheet.layoutParams.height = midHeight
                         bottomSheet.requestLayout()
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = midHeight + dpToPx(16)
@@ -188,6 +187,18 @@ class HomeFragment : Fragment() {
             }
             override fun onSlide(bottomSheet: View, slideOffset: Float) {}
         })
+
+        bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+            override fun onStateChanged(bottomSheet: View, newState: Int) {
+                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+                    // Impede esconder via gesto
+                    bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+                }
+            }
+
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {}
+        })
+
 
         // Lixeira do destino adapter
         destinoAdapter = DestinoAdapter(emptyList()) { destino ->
@@ -530,5 +541,24 @@ class HomeFragment : Fragment() {
 
     fun getDestinoAdapter(): DestinoAdapter {
         return destinoAdapter
+    }
+
+    //Concertar
+    fun setarImgemUsuario(usuario: Usuario?, view: View){
+        val actionProfile = view.findViewById<ImageView>(R.id.action_profile)
+        if (!usuario?.fotoUsuario.isNullOrEmpty()) {
+            val bitmap = FirebaseUtil.base64ToBitmap(usuario.fotoUsuario!!)
+            if (bitmap != null) {
+                Glide.with(requireContext())
+                    .load(bitmap)
+                    .circleCrop()
+                    .override(512, 512)
+                    .into(actionProfile)
+            } else {
+                actionProfile.setImageResource(R.drawable.ic_profile)
+            }
+        } else {
+            actionProfile.setImageResource(R.drawable.ic_profile)
+        }
     }
 }
