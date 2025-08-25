@@ -4,125 +4,82 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.pathfinder.databinding.FragmentTimelineBinding
-import java.util.*
+import com.example.pathfinder.R
+import com.example.pathfinder.data.models.Postagem
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 
 class TimelineFragment : Fragment() {
 
-    private var _binding: FragmentTimelineBinding? = null
-    private val binding get() = _binding!!
-    private val viewModel: TimelineViewModel by viewModels()
+    private val auth = FirebaseAuth.getInstance()
+    private val firestore = FirebaseFirestore.getInstance()
+
     private lateinit var postsAdapter: PostsAdapter
+    private lateinit var rvPosts: RecyclerView
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentTimelineBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+        val view = inflater.inflate(R.layout.fragment_timeline, container, false)
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        rvPosts = view.findViewById(R.id.rv_posts)
         setupRecyclerView()
-        setupObservers()
-        setupFab()
-        setupScrollBehavior()
+
+        // FAB para criar post
+        val fab = view.findViewById<FloatingActionButton>(R.id.fab_create_post)
+        fab.setOnClickListener {
+            findNavController().navigate(R.id.action_timelineFragment_to_createPostFragment)
+        }
+
+        return view
     }
 
     private fun setupRecyclerView() {
-        postsAdapter = PostsAdapter(emptyList()) { post, action ->
+        postsAdapter = PostsAdapter(auth.currentUser?.uid ?: "") { post, action ->
             when (action) {
-                is PostsAdapter.Action.Like -> handleLike(post)
-                is PostsAdapter.Action.Comment -> showComments(post)
-                is PostsAdapter.Action.Share -> sharePost(post)
                 is PostsAdapter.Action.Delete -> deletePost(post)
+                else -> {}
             }
         }
+        rvPosts.layoutManager = LinearLayoutManager(requireContext())
+        rvPosts.adapter = postsAdapter
 
-        binding.rvPosts.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = postsAdapter
-            setHasFixedSize(true)
-        }
+        loadPosts()
     }
 
-    private fun setupObservers() {
-        viewModel.posts.observe(viewLifecycleOwner) { posts ->
-            postsAdapter = PostsAdapter(posts) { post, action ->
-                when (action) {
-                    is PostsAdapter.Action.Like -> handleLike(post)
-                    is PostsAdapter.Action.Comment -> showComments(post)
-                    is PostsAdapter.Action.Share -> sharePost(post)
-                    is PostsAdapter.Action.Delete -> deletePost(post)
+    private fun loadPosts() {
+        firestore.collection("postagens")
+            .orderBy("horaPostagem", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Toast.makeText(requireContext(), "Erro ao carregar postagens.", Toast.LENGTH_SHORT).show()
+                    return@addSnapshotListener
                 }
+
+                val posts = snapshot?.documents?.mapNotNull {
+                    it.toObject(Postagem::class.java)
+                } ?: emptyList()
+
+                postsAdapter.submitList(posts)
             }
-            binding.rvPosts.adapter = postsAdapter
-        }
     }
 
-    private fun setupFab() {
-        binding.fabAddPost.setOnClickListener {
-            val newPost = Post(
-                id = UUID.randomUUID().toString(),
-                userId = "currentUser",
-                username = "Você",
-                content = "Novo post de exemplo!",
-                timestamp = Date()
-            )
-            viewModel.addPost(newPost)
-        }
-    }
-
-    private fun setupScrollBehavior() {
-        binding.rvPosts.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                // dy > 0 = rolagem para baixo (esconde o FAB)
-                // dy < 0 = rolagem para cima (mostra o FAB)
-                if (dy > 0 && binding.fabAddPost.isShown) {
-                    binding.fabAddPost.hide()
-                } else if (dy < 0 && !binding.fabAddPost.isShown) {
-                    binding.fabAddPost.show()
-                }
+    private fun deletePost(post: Postagem) {
+        firestore.collection("postagens").document(post.idPostagem ?: return)
+            .delete()
+            .addOnSuccessListener {
+                Toast.makeText(requireContext(), "Post deletado", Toast.LENGTH_SHORT).show()
             }
-        })
-    }
-
-    private fun handleLike(post: Post) {
-        val updatedPost = post.copy(
-            isLiked = !post.isLiked,
-            likes = if (!post.isLiked) post.likes + 1 else post.likes - 1
-        )
-        viewModel.updatePost(updatedPost)
-    }
-
-    private fun showComments(post: Post) {
-        // Implemente a navegação para os comentários
-    }
-
-    private fun sharePost(post: Post) {
-        // Implemente o compartilhamento
-    }
-
-    private fun deletePost(post: Post) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Deletar postagem")
-            .setMessage("Tem certeza que deseja deletar esta postagem?")
-            .setPositiveButton("Deletar") { _, _ ->
-                viewModel.deletePost(post.id)
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Erro ao deletar post", Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton("Cancelar", null)
-            .show()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="#F9F9F9">
+
+    <!-- Toolbar com botão de voltar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:title="Nova Postagem"
+        app:titleTextColor="@android:color/white"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <!-- Card para deixar bonito -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp"
+        android:layout_margin="16dp"
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Texto da postagem -->
+            <EditText
+                android:id="@+id/et_post_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Escreva algo..."
+                android:background="@android:color/transparent"
+                android:padding="12dp"
+                android:textSize="16sp" />
+
+            <!-- Botão para escolher imagem -->
+            <ImageButton
+                android:id="@+id/btn_select_image"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_add_photo"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Selecionar imagem"
+                android:layout_marginTop="8dp"
+                app:tint="?attr/colorPrimary" />
+
+            <!-- Preview da imagem escolhida -->
+            <ImageView
+                android:id="@+id/iv_post_image"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:adjustViewBounds="true"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/gray_background"/>
+
+            <!-- Botão de postar -->
+            <Button
+                android:id="@+id/btn_post"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Postar"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="?attr/colorPrimary"
+                android:textColor="@android:color/white"
+                style="@style/Widget.MaterialComponents.Button" />
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

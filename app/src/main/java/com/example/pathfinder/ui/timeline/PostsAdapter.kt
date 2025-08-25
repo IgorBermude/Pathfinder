@@ -9,17 +9,30 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.pathfinder.R
+import com.example.pathfinder.data.models.Postagem
+import com.example.pathfinder.data.models.Usuario
+import com.example.pathfinder.util.FirebaseUtil
+import com.google.firebase.firestore.FirebaseFirestore
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class PostsAdapter(
-    private val posts: List<Post>,
-    private val onPostAction: (Post, Action) -> Unit
+    private val currentUserId: String,
+    private val onPostAction: (Postagem, Action) -> Unit
 ) : RecyclerView.Adapter<PostsAdapter.PostViewHolder>() {
 
+    private var posts = emptyList<Postagem>()
+
     sealed class Action {
-        data class Like(val post: Post) : Action()
-        data class Comment(val post: Post) : Action()
-        data class Share(val post: Post) : Action()
-        data class Delete(val post: Post) : Action()
+        data class Like(val post: Postagem) : Action()
+        data class Comment(val post: Postagem) : Action()
+        data class Share(val post: Postagem) : Action()
+        data class Delete(val post: Postagem) : Action()
+    }
+
+    fun submitList(newPosts: List<Postagem>) {
+        posts = newPosts
+        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
@@ -40,39 +53,54 @@ class PostsAdapter(
         private val tvContent: TextView = itemView.findViewById(R.id.tv_post_content)
         private val ivPostImage: ImageView = itemView.findViewById(R.id.iv_post_image)
         private val ivUserAvatar: ImageView = itemView.findViewById(R.id.iv_user_avatar)
-        private val ibLike: ImageButton = itemView.findViewById(R.id.ib_like)
-        private val ibComment: ImageButton = itemView.findViewById(R.id.ib_comment)
-        private val ibShare: ImageButton = itemView.findViewById(R.id.ib_share)
         private val ibDelete: ImageButton = itemView.findViewById(R.id.ib_delete)
 
-        fun bind(post: Post) {
-            tvUsername.text = post.username
-            tvContent.text = post.content
-            tvPostTime.text = post.formattedDate()
+        fun bind(post: Postagem) {
+            tvContent.text = post.descricaoPostagem
+            tvPostTime.text = post.horaPostagem?.toLongOrNull()?.let { formatTimestamp(it) } ?: ""
 
-            post.imageUrl?.let { url ->
+            // Buscar nome do usuário do Firebase se não estiver no post
+            post.usuarioPostagemId?.let { userId ->
+                FirebaseFirestore.getInstance().collection("usuarios")
+                    .document(userId)
+                    .get()
+                    .addOnSuccessListener { doc ->
+                        val usuario = doc.toObject(Usuario::class.java)
+                        tvUsername.text = usuario?.nomeUsuario ?: "Usuário"
+                        // Avatar
+                        if(!usuario?.fotoUsuario.isNullOrEmpty()) {
+                            val bitmap = FirebaseUtil.base64ToBitmap(usuario?.fotoUsuario!!)
+                            Glide.with(itemView.context)
+                                .load(bitmap)
+                                .circleCrop()
+                                .into(ivUserAvatar)
+                        } else {
+                            ivUserAvatar.setImageResource(R.drawable.ic_profile)
+                        }
+                    }
+            }
+
+            // Imagem do post
+            if(!post.fotoPostagem.isNullOrEmpty()) {
                 ivPostImage.visibility = View.VISIBLE
+                val bitmap = FirebaseUtil.base64ToBitmap(post.fotoPostagem!!)
                 Glide.with(itemView.context)
-                    .load(url)
-                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .load(bitmap)
+                    .centerCrop()
                     .into(ivPostImage)
-            } ?: run { ivPostImage.visibility = View.GONE }
+            } else {
+                ivPostImage.visibility = View.GONE
+            }
 
-            Glide.with(itemView.context)
-                .load(R.drawable.ic_profile)
-                .circleCrop()
-                .into(ivUserAvatar)
-
-            ibDelete.visibility =View.VISIBLE
-
-            ibLike.setImageResource(
-                if (post.isLiked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off
-            )
-
-            ibLike.setOnClickListener { onPostAction(post, Action.Like(post)) }
-            ibComment.setOnClickListener { onPostAction(post, Action.Comment(post)) }
-            ibShare.setOnClickListener { onPostAction(post, Action.Share(post)) }
+            // Botão deletar apenas para o autor
+            ibDelete.visibility = if(post.usuarioPostagemId == currentUserId) View.VISIBLE else View.GONE
             ibDelete.setOnClickListener { onPostAction(post, Action.Delete(post)) }
+        }
+
+        private fun formatTimestamp(timestamp: Long): String {
+            val sdf = java.text.SimpleDateFormat("HH:mm dd/MM/yyyy", Locale.getDefault())
+            return sdf.format(timestamp)
         }
     }
 }
+

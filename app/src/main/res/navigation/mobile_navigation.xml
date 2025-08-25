@@ -5,6 +5,7 @@
     android:id="@+id/mobile_navigation"
     app:startDestination="@+id/navigation_home">
 
+    <!-- Fragment Home -->
     <fragment
         android:id="@+id/navigation_home"
         android:name="com.example.pathfinder.ui.home.HomeFragment"
@@ -18,12 +19,14 @@
             app:destination="@id/navigation_notifications" />
     </fragment>
 
+    <!-- Fragment Notifications -->
     <fragment
         android:id="@+id/navigation_notifications"
         android:name="com.example.pathfinder.ui.notifications.NotificationsFragment"
         android:label="@string/title_notifications"
         tools:layout="@layout/fragment_notifications" />
 
+    <!-- Fragment Register -->
     <fragment
         android:id="@+id/registerFragment"
         android:name="com.example.pathfinder.ui.register.RegisterFragment"
@@ -34,6 +37,7 @@
             app:destination="@id/loginFragment" />
     </fragment>
 
+    <!-- Fragment Login -->
     <fragment
         android:id="@+id/loginFragment"
         android:name="com.example.pathfinder.ui.login.LoginFragment"
@@ -45,13 +49,27 @@
         <action
             android:id="@+id/action_loginFragment_to_navigation_home"
             app:destination="@id/navigation_home" />
-
     </fragment>
+
     <fragment
         android:id="@+id/navigation_timeline"
         android:name="com.example.pathfinder.ui.timeline.TimelineFragment"
-        android:label="fragment_timeline"
-        tools:layout="@layout/fragment_timeline" />
+        android:label="Timeline"
+        tools:layout="@layout/fragment_timeline">
+
+        <action
+            android:id="@+id/action_timelineFragment_to_createPostFragment"
+            app:destination="@id/createPostFragment" />
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/createPostFragment"
+        android:name="com.example.pathfinder.ui.timeline.CreatePostFragment"
+        android:label="Criar Postagem"
+        tools:layout="@layout/fragment_create_post" />
+
+    <!-- Fragment Profile -->
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.example.pathfinder.ui.profile.ProfileFragment"
