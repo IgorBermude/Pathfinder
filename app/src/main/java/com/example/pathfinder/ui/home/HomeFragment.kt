@@ -100,13 +100,14 @@ class HomeFragment : Fragment() {
         val displayMetrics = resources.displayMetrics
         val navViewHeight = dpToPx(56) // Altura padrão do BottomNavigationView
         val peekHeight = navViewHeight + dpToPx(90) // "Pontinha" acima do navView
-        val midHeight = (displayMetrics.heightPixels * 0.35).toInt()
+        val midHeight = (displayMetrics.heightPixels * 0.40).toInt()
         val expandedHeight = (displayMetrics.heightPixels * 0.85).toInt() // Quase tela cheia
 
         val uiContainer = binding.root.findViewById<View>(R.id.ui_container)
 
         bottomSheetBehavior.peekHeight = peekHeight
         //bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        bottomSheetBehavior.isHideable = false
 
         txSelecionarDestino = binding.root.findViewById(R.id.tx_selecione_destino)
 
@@ -124,6 +125,7 @@ class HomeFragment : Fragment() {
                         NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
                     } else{
                         bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+                        bottomSheetBehavior.isHideable = false
                     }
                     val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
                     mapaFragment?.removeLastMarker()
@@ -139,9 +141,9 @@ class HomeFragment : Fragment() {
                 val btnSalvarRota = requireView().findViewById<View>(R.id.btn_salvar)
                 when (newState) {
                     BottomSheetBehavior.STATE_HIDDEN -> {
-                        Toast.makeText(requireContext(), "STATE_HIDDEN", Toast.LENGTH_SHORT).show()
+                        //Toast.makeText(requireContext(), "STATE_HIDDEN", Toast.LENGTH_SHORT).show()
                         NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
-                        /*acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                        acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = dpToPx(120)
                         }
                         btnSalvarRota?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
@@ -149,10 +151,10 @@ class HomeFragment : Fragment() {
                         }
                         btnIniciarRota?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = dpToPx(119)
-                        }*/
+                        }
                     }
                     BottomSheetBehavior.STATE_COLLAPSED -> {
-                        Toast.makeText(requireContext(), "STATE_COLLAPSED", Toast.LENGTH_SHORT).show()
+                        //Toast.makeText(requireContext(), "STATE_COLLAPSED", Toast.LENGTH_SHORT).show()
                         if(uiContainer.isGone){
                             NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
                         }
@@ -169,9 +171,9 @@ class HomeFragment : Fragment() {
                         }
                     }
                     BottomSheetBehavior.STATE_EXPANDED -> {
-                        Toast.makeText(requireContext(), "STATE_EXPANDED", Toast.LENGTH_SHORT).show()
+                        //Toast.makeText(requireContext(), "STATE_EXPANDED", Toast.LENGTH_SHORT).show()
                         NavigationViewUtils.esconderBottomNavigationView(requireActivity())
-                        //bottomSheet.layoutParams.height = midHeight
+                        bottomSheet.layoutParams.height = midHeight
                         bottomSheet.requestLayout()
                         acTarget?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                             bottomMargin = midHeight + dpToPx(16)
@@ -192,7 +194,7 @@ class HomeFragment : Fragment() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 if (newState == BottomSheetBehavior.STATE_HIDDEN) {
                     // Impede esconder via gesto
-                    bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+                    //bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
                 }
             }
 
@@ -233,6 +235,7 @@ class HomeFragment : Fragment() {
                 replace(R.id.ui_container, RouteFragment())
             }
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            bottomSheetBehavior.isHideable = false
             removerOnMapClickListener()
         }
 
@@ -405,6 +408,7 @@ class HomeFragment : Fragment() {
         val searchPlace = SearchPlace.createFromSearchResult(searchResult, responseInfo)
         searchPlaceView.open(searchPlace)
 
+        bottomSheetBehavior.isHideable = true
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
 
         val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
@@ -442,6 +446,7 @@ class HomeFragment : Fragment() {
         val rotaAtual = homeViewModel.obterUltimaRota()
 
         if (destinos.isEmpty()) {
+            bottomSheetBehavior.isHideable = true
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
             btnSalvarRota.visibility = View.GONE
             btnIniciarRota.visibility = View.GONE
@@ -452,6 +457,7 @@ class HomeFragment : Fragment() {
             bottomSheet.layoutParams.height = targetHeight
             bottomSheet.requestLayout()
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            bottomSheetBehavior.isHideable = false
             btnSalvarRota.visibility = View.VISIBLE
             btnIniciarRota.visibility = View.VISIBLE
             txNomeRota.text = rotaAtual?.nomeRota
@@ -525,6 +531,7 @@ class HomeFragment : Fragment() {
                     override fun onResults(results: List<SearchResult>, responseInfo: ResponseInfo) {
                         val searchPlace = SearchPlace.createFromSearchResult(results.first(), responseInfo)
                         searchPlaceView.open(searchPlace)
+                        bottomSheetBehavior.isHideable = true
                         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
                         mapaFragment.addMarker(point.latitude(), point.longitude())
                     }

@@ -1,174 +1,175 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@android:color/white"
     tools:context=".ui.register.RegisterFragment">
 
+    <!-- Logo -->
+    <ImageView
+        android:id="@+id/ivLogo"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="60dp"/>
 
+    <!-- Título -->
     <TextView
         android:id="@+id/tvTitleRegisterScreen"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/tv_title_register_screen"
-        android:textSize="@dimen/text_title_register_screen_size"
-        android:textColor="@color/textColor"
-        app:layout_constraintTop_toTopOf="parent"
+        android:text="Create Account"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@color/verde_padrao"
+        app:layout_constraintTop_toBottomOf="@id/ivLogo"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="@dimen/text_title_register_screen_margin_top"
-        />
+        android:layout_marginTop="16dp"/>
 
-    <!-- NAME SESSION !-->
-
-    <TextView
-        android:id="@+id/tvName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/tvTitleRegisterScreen"
-        app:layout_constraintStart_toStartOf="@id/tilEmail"
-        android:text="@string/Name"
-        android:textSize="@dimen/tv_name_text_size_register_screen"
-        android:layout_marginTop="@dimen/tv_name_register_screen_margin_top"
-        />
-
+    <!-- Nome -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilName"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/tvName"
-        android:layout_marginTop="@dimen/tv_til_margin_top_register_screen"
-        android:layout_marginStart="@dimen/margin_side_register_screen"
-        android:layout_marginEnd="@dimen/margin_side_register_screen"
-        >
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="@color/purple_500"
+        app:boxStrokeWidth="1dp"
+        app:boxStrokeWidthFocused="2dp"
+        app:layout_constraintTop_toBottomOf="@id/tvTitleRegisterScreen"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="40dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp">
 
-        <androidx.appcompat.widget.AppCompatEditText
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etName"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:inputType="text"
-            android:hint="@string/your_name"
-            />
-
+            android:layout_height="wrap_content"
+            android:hint="Nome completo"
+            android:inputType="textPersonName"
+            android:singleLine="true"
+            android:backgroundTint="@android:color/transparent" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- EMAIL SESSION !-->
-
-    <TextView
-        android:id="@+id/tvEmail"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/tilName"
-        app:layout_constraintStart_toStartOf="@id/tilEmail"
-        android:text="@string/email"
-        android:textSize="@dimen/tv_register_screen_text_size"
-        android:layout_marginTop="@dimen/tv_register_screen_margin_top"
-        />
-
+    <!-- Email -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilEmail"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/tvEmail"
-        android:layout_marginTop="@dimen/tv_til_margin_top_register_screen"
-        android:layout_marginStart="@dimen/margin_side_register_screen"
-        android:layout_marginEnd="@dimen/margin_side_register_screen"
-        >
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="@color/purple_500"
+        app:boxStrokeWidth="1dp"
+        app:boxStrokeWidthFocused="2dp"
+        app:layout_constraintTop_toBottomOf="@id/tilName"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp">
 
-        <androidx.appcompat.widget.AppCompatEditText
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etEmail"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:inputType="text"
-            android:hint="@string/your_email"
-            />
-
+            android:layout_height="wrap_content"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:singleLine="true"
+            android:backgroundTint="@android:color/transparent" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- PASSWORD SESSION !-->
-
-    <TextView
-        android:id="@+id/tvPassword"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/tilEmail"
-        app:layout_constraintStart_toStartOf="@id/tilEmail"
-        android:text="@string/password"
-        android:textSize="@dimen/tv_register_screen_text_size"
-        android:layout_marginTop="@dimen/tv_register_screen_margin_top"
-        />
-
+    <!-- Senha -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilPassword"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/tvPassword"
-        android:layout_marginTop="@dimen/tv_til_margin_top_register_screen"
-        android:layout_marginStart="@dimen/margin_side_register_screen"
-        android:layout_marginEnd="@dimen/margin_side_register_screen"
-        >
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="@color/purple_500"
+        app:boxStrokeWidth="1dp"
+        app:boxStrokeWidthFocused="2dp"
+        app:endIconMode="password_toggle"
+        app:layout_constraintTop_toBottomOf="@id/tilEmail"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp">
 
-        <androidx.appcompat.widget.AppCompatEditText
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etPassword"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:inputType="text"
-            android:hint="@string/your_password"
-            />
-
+            android:layout_height="wrap_content"
+            android:hint="Senha"
+            android:inputType="textPassword"
+            android:backgroundTint="@android:color/transparent" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- PHONE NUMBER SESSION !-->
+    <!-- Data de nascimento -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilBirthDate"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="@color/purple_500"
+        app:boxStrokeWidth="1dp"
+        app:boxStrokeWidthFocused="2dp"
+        app:layout_constraintTop_toBottomOf="@id/tilPassword"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp">
 
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etBirthDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Data de nascimento (dd/MM/yyyy)"
+            android:inputType="date"
+            android:maxLength="10"
+            android:backgroundTint="@android:color/transparent" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Botão Criar Conta -->
+    <Button
+        android:id="@+id/btnRegister"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Criar Conta"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:backgroundTint="@color/verde_padrao"
+        android:padding="14dp"
+        app:cornerRadius="12dp"
+        app:layout_constraintTop_toBottomOf="@id/tilBirthDate"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp"/>
+
+    <!-- Já tenho conta Link -->
     <TextView
-        android:id="@+id/tvPhoneNumber"
+        android:id="@+id/tvCreateAccount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/tilPassword"
-        app:layout_constraintStart_toStartOf="@id/tilEmail"
-        android:text="@string/data_nascimento"
-        android:textSize="@dimen/tv_name_text_size_register_screen"
-        android:layout_marginTop="@dimen/tv_register_screen_margin_top"
-        />
-
-    <!-- AGE SESSION !-->
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilAge"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/tvPhoneNumber"
-        android:layout_marginTop="@dimen/tv_til_margin_top_register_screen"
-        android:layout_marginStart="@dimen/margin_side_register_screen"
-        android:layout_marginEnd="@dimen/margin_side_register_screen">
-
-        <androidx.appcompat.widget.AppCompatEditText
-            android:id="@+id/etAge"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:inputType="text"
-            android:hint="Data de nascimento (dd/MM/yyyy)"
-            android:maxLength="10" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnLogin"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/login_button_welcome_screen_margin_top"
-        android:layout_marginTop="48dp"
-        android:layout_marginEnd="@dimen/login_button_welcome_screen_margin_top"
-        android:background="@drawable/custom_button_background"
-        android:padding="@dimen/btn_create_register_screen_padding"
-        android:text="@string/create_btn"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textSize="@dimen/btn_login_text_size"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        android:text="Já tenho uma conta"
+        android:textSize="14sp"
+        android:textColor="@color/verde_variante"
+        android:padding="6dp"
+        app:layout_constraintTop_toBottomOf="@id/btnRegister"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tilAge" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="24dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

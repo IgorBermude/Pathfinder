@@ -1,5 +1,6 @@
 package com.example.pathfinder.ui.login
 
+import android.content.Context
 import androidx.fragment.app.viewModels
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -18,15 +19,20 @@ import com.example.pathfinder.data.AuthViewModel
 import com.example.pathfinder.databinding.FragmentLoginBinding
 import kotlinx.coroutines.launch
 import android.content.Intent
+import android.widget.CheckBox
+import android.widget.TextView
 import com.example.pathfinder.ui.MainActivity
 import androidx.activity.OnBackPressedCallback
 import com.example.pathfinder.data.models.Usuario
+import com.google.android.material.textfield.TextInputEditText
 
 class LoginFragment : Fragment() {
     private var binding: FragmentLoginBinding? = null
     private lateinit var navController: NavController
-
     private val vm: AuthViewModel by viewModels{ AuthViewModel.Factory }
+    private lateinit var cbRememberMe: CheckBox
+    private lateinit var etEmail: TextInputEditText
+    private lateinit var etPassword: TextInputEditText
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,6 +47,20 @@ class LoginFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         navController = view.findNavController()
 
+        val loginInfoText = view.findViewById<TextView>(R.id.tvLoginInfo)
+        cbRememberMe = view.findViewById(R.id.cbRememberMe)
+        etEmail = view.findViewById(R.id.etEmail)
+        etPassword = view.findViewById(R.id.etPassword)
+
+        // Recupera o estado salvo
+        val prefs = requireContext().getSharedPreferences("login_prefs", Context.MODE_PRIVATE)
+        val rememberMe = prefs.getBoolean("remember_me", false)
+        cbRememberMe.isChecked = rememberMe
+        if (rememberMe) {
+            etEmail.setText(prefs.getString("saved_email", ""))
+            etPassword.setText(prefs.getString("saved_password", ""))
+        }
+
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 requireActivity().finish()
@@ -54,18 +74,23 @@ class LoginFragment : Fragment() {
                     when(state){
                         LoginUiState.LOADING -> {
                             //binding?.progressBar?.visibility = View.VISIBLE
-                            Toast.makeText(requireContext(), "Loading...", Toast.LENGTH_SHORT).show()
+                            //Toast.makeText(requireContext(), "Loading...", Toast.LENGTH_SHORT).show()
                         }
                         LoginUiState.SUCCESS -> {
                             //binding?.progressBar?.visibility = View.GONE
-                            Toast.makeText(requireContext(), "Login efetuado com sucesso", Toast.LENGTH_SHORT).show()
+                            //Toast.makeText(requireContext(), "Login efetuado com sucesso", Toast.LENGTH_SHORT).show()
+                            loginInfoText.text = "Login efetuado com sucesso"
+                            loginInfoText.setTextColor(resources.getColor(R.color.verde))
                             val intent = Intent(requireActivity(), MainActivity::class.java)
                             startActivity(intent)
                             requireActivity().finish()
                         }
                         LoginUiState.ERROR -> {
                             //binding?.progressBar?.visibility = View.GONE
-                            Toast.makeText(requireContext(), "Erro ao efetuar login", Toast.LENGTH_SHORT).show()
+                            //Toast.makeText(requireContext(), "Erro ao efetuar login", Toast.LENGTH_SHORT).show()
+                            loginInfoText.visibility = View.VISIBLE
+                            loginInfoText.text = "Senha e/ou email incorretos"
+                            loginInfoText.setTextColor(resources.getColor(R.color.red))
                         }
                     }
                 }
@@ -76,13 +101,26 @@ class LoginFragment : Fragment() {
             val email: String = binding?.etEmail?.text.toString()
             val password: String = binding?.etPassword?.text.toString()
 
+            val editor = prefs.edit()
+            if (cbRememberMe.isChecked) {
+                editor.putBoolean("remember_me", true)
+                editor.putString("saved_email", etEmail.text.toString())
+                editor.putString("saved_password", etPassword.text.toString())
+            } else {
+                editor.clear()
+            }
+            editor.apply()
+
             if (email.isNotEmpty() && password.isNotEmpty()) {
                 val usuario = Usuario(emailUsuario = email, senhaUsuario = password)
                 lifecycleScope.launch {
                     vm.login(usuario)
                 }
             } else {
-                Toast.makeText(requireContext(), "Por favor preencha todos os campos", Toast.LENGTH_SHORT).show()
+                //Toast.makeText(requireContext(), "Por favor preencha todos os campos", Toast.LENGTH_SHORT).show()
+                loginInfoText.visibility = View.VISIBLE
+                loginInfoText.text = "Por favor preencha todos os campos"
+                loginInfoText.setTextColor(resources.getColor(R.color.black))
             }
         }
 

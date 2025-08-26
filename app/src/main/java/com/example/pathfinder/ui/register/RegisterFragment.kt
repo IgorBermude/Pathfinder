@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import com.example.pathfinder.LoginUiState
 import com.example.pathfinder.R
@@ -60,11 +61,11 @@ class RegisterFragment : Fragment() {
             }
         }
 
-        binding?.btnLogin?.setOnClickListener {
+        binding?.btnRegister?.setOnClickListener {
             val name = binding?.etName?.text.toString()
             val email = binding?.etEmail?.text.toString()
             val password = binding?.etPassword?.text.toString()
-            val ageInput = binding?.etAge?.text.toString()
+            val ageInput = binding?.etBirthDate?.text.toString()
 
             if (!validarCampos(name, email, password, ageInput)) {
                 Toast.makeText(requireContext(), "Preencha todos os campos", Toast.LENGTH_SHORT).show()
@@ -97,6 +98,10 @@ class RegisterFragment : Fragment() {
                     Log.e("RegisterFragment", "Erro genérico: ${e.message}", e)
                 }
             }
+        }
+
+        binding?.tvCreateAccount?.setOnClickListener{
+            findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
         }
     }
 
