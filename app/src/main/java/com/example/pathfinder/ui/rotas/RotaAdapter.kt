@@ -1,5 +1,6 @@
 package com.example.pathfinder.ui.rotas
 
+import android.location.Location
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -8,8 +9,11 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.pathfinder.R
+import com.example.pathfinder.data.models.Destino
 import com.example.pathfinder.data.models.Rota
+import com.example.pathfinder.ui.components.LocationHelper
 import com.google.firebase.Timestamp
+import com.mapbox.geojson.Point
 import java.text.SimpleDateFormat
 import java.util.*
 

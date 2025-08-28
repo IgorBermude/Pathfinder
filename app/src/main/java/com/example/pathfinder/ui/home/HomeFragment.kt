@@ -220,6 +220,7 @@ class HomeFragment : Fragment() {
         recyclerView?.adapter = destinoAdapter
         recyclerView?.layoutManager = LinearLayoutManager(requireContext())
 
+        // Mover o listener do navController para cá
         val navHostFragment =
             requireActivity().supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_main) as NavHostFragment
         val navController = navHostFragment.navController
@@ -477,11 +478,12 @@ class HomeFragment : Fragment() {
         val btnIniciarRota = requireView().findViewById<View>(R.id.btn_iniciar_rota)
         val acTarget = requireView().findViewById<View>(R.id.ac_target)
         val btnSalvar = requireView().findViewById<View>(R.id.btn_salvar)
+        val btnMudarMapa = requireView().findViewById<View>(R.id.map_type_button)
 
         txSelecionarDestino.visibility = View.GONE
 
         // Animação de fade out e esconder
-        listOf(searchBar, actionProfile, btnIniciarRota, btnSalvar, acTarget).forEach { view ->
+        listOf(searchBar, actionProfile, btnIniciarRota, btnSalvar, acTarget, btnMudarMapa).forEach { view ->
             view?.animate()
                 ?.alpha(0f)
                 ?.setDuration(300)
@@ -496,11 +498,12 @@ class HomeFragment : Fragment() {
         val btnIniciarRota = requireView().findViewById<View>(R.id.btn_iniciar_rota)
         val acTarget = requireView().findViewById<View>(R.id.ac_target)
         val btnSalvar = requireView().findViewById<View>(R.id.btn_salvar)
+        val btnMudarMapa = requireView().findViewById<View>(R.id.map_type_button)
 
         val uiContainer = requireView().findViewById<View>(R.id.ui_container)
         uiContainer.visibility = View.GONE
 
-        listOf(searchBar, actionProfile, btnIniciarRota, acTarget, btnSalvar).forEach { view ->
+        listOf(searchBar, actionProfile, btnIniciarRota, acTarget, btnSalvar, btnMudarMapa).forEach { view ->
             view?.visibility = View.VISIBLE
             view?.animate()?.alpha(1f)?.setDuration(300)?.start()
         }

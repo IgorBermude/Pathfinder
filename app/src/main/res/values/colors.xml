@@ -11,6 +11,7 @@
     <color name="buttonBackgroundColor">#835DEE</color>
     <color name="verde_padrao">#00C897</color>
     <color name="verde_variante">#00936E</color>
+    <color name="verde_variante_clara">#80D6BC</color>
     <color name="gray">#FF888888</color>
     <color name="gray_light">#E1E1E1</color>
     <color name="gray_blue">#aab7ef</color>
@@ -19,4 +20,5 @@
     <color name="white_gray">#F5F5F5</color>
     <color name="blue_gray">#3F4E6B</color>
     <color name="verde">#00FF00</color>
+    <color name="cinza_escuro">#444444</color>
 </resources>
