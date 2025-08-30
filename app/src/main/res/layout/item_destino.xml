@@ -36,6 +36,15 @@
                 android:layout_height="wrap_content"
                 android:text="Distancia: ?"
                 android:textColor="#888888"
+                android:textSize="14sp"
+                android:visibility="gone"/>
+
+            <TextView
+                android:id="@+id/text_endereco"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Endereço: ?"
+                android:textColor="#888888"
                 android:textSize="14sp" />
         </LinearLayout>
 

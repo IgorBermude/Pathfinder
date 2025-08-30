@@ -90,8 +90,11 @@ class HomeFragment : Fragment() {
 
         targetIcon = binding.root.findViewById(R.id.ac_target)
         searchPlaceView = binding.root.findViewById(R.id.search_place_view)
-        searchPlaceView.initialize(CommonSearchViewConfiguration(DistanceUnitType.IMPERIAL))
-        
+        searchPlaceView.initialize(CommonSearchViewConfiguration(DistanceUnitType.METRIC))
+
+        searchPlaceView.isFavoriteButtonVisible = false
+        searchPlaceView.isShareButtonVisible = false
+
         val bottomSheet = binding.root.findViewById<LinearLayout>(R.id.bottom_sheet_destinos)
         val recyclerView = binding.root.findViewById<RecyclerView>(R.id.recycler_destinos)
         bottomSheetBehavior = bottomSheet?.let { BottomSheetBehavior.from(it) }!!
@@ -311,7 +314,7 @@ class HomeFragment : Fragment() {
             targetIcon.setColorFilter(resources.getColor(R.color.blue, null))
 
             val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as MapaFragment
-            mapaFragment.cameraSeguir()
+            mapaFragment.centralizeUserLocation()
             mapaFragment.setupMapMoveListener(targetIcon)
         }
 
@@ -327,8 +330,14 @@ class HomeFragment : Fragment() {
             val destination = Destino(
                 nomeDestino = searchPlace.name,
                 localDestino = searchPlace.coordinate,
-                distancia = searchPlace.distanceMeters
-            )
+                distancia = searchPlace.distanceMeters,
+                endereco = listOf(
+                    searchPlace.address?.place.orEmpty(),
+                    searchPlace.address?.region.orEmpty(),
+                    searchPlace.address?.street.orEmpty(),
+                    searchPlace.address?.houseNumber.orEmpty()
+                ).filter { it.isNotBlank() }
+                    .joinToString(", ")            )
             val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
 
             mapaFragment?.getUserLocation { location ->

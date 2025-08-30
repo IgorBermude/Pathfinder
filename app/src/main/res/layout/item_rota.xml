@@ -1,42 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    android:elevation="4dp">
+    android:layout_margin="6dp"
+    app:cardUseCompatPadding="true"
+    app:cardCornerRadius="6dp"
+    app:cardElevation="6dp"
+    app:cardBackgroundColor="?attr/colorSurface">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp">
+        android:orientation="horizontal"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        android:padding="10dp">
 
-        <TextView
-            android:id="@+id/tv_nome"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Rota 1"
-            android:textStyle="bold" />
+        <ImageView
+            android:id="@+id/iv_icone"
+            android:layout_width="45dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="12dp"
+            android:importantForAccessibility="no"
+            android:contentDescription="Ícone"
+            android:src="@drawable/ic_route_overview"/>
 
-        <TextView
-            android:id="@+id/tv_distancia"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Distância: 10 km" />
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_dt_modificacao"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Modificada: 01/01/2024 12:00"
-            android:visibility="gone"
-            android:layout_marginTop="4dp"/>
+            <TextView
+                android:id="@+id/tv_nome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="Rota 1"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-        <Button
-            android:id="@+id/btn_remover"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Remover" />
+            <TextView
+                android:id="@+id/tv_distancia"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:alpha="0.8"
+                android:text="Distância estimada: 10 km"
+                android:textColor="?attr/colorOnSurface" />
+
+            <TextView
+                android:id="@+id/tv_dt_modificacao"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:alpha="0.6"
+                android:text="Modificada: 01/01/2024 12:00"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/btn_remover"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="?attr/colorPrimary"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                android:text="Remover"
+                android:textAllCaps="false"
+                android:textColor="?attr/colorOnPrimary" />
+        </LinearLayout>
     </LinearLayout>
 
 </androidx.cardview.widget.CardView>

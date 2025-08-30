@@ -6,4 +6,5 @@ data class Destino(
     val nomeDestino: String = "",
     val localDestino: Point = Point.fromLngLat(0.0, 0.0),
     val distancia: Double? = null,
+    val endereco: String? = null
 )

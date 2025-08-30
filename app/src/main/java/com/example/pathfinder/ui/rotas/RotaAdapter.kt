@@ -43,8 +43,8 @@ class RotaAdapter(
         //holder.tempo.text = "Tempo: ${rota.tempoTotalRota}"
         holder.distancia.text = rota.distanciaRota
             ?.div(1000.0)
-            ?.let { "Distância: %.1f km".format(it) }
-            ?: "Distância: Desconhecida"
+            ?.let { "Distância estimada: %.1f km".format(it) }
+            ?: "Distância estimada: Desconhecida"
         // Formata a data se não for nula
         rota.dtModificacaoRota?.toDate()?.let {
             val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
