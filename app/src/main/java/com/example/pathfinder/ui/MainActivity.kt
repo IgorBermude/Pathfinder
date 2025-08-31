@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity() {
             navView.visibility = View.GONE // Esconder o BottomNavigationView
             val navController = findNavController(R.id.nav_host_fragment_activity_main)
             navController.navigate(R.id.action_navigation_home_to_loginFragment)
-            showMessage("Usuário não está logado")
+            //showMessage("Usuário não está logado")
             return
         } else { // Se o usuário estiver logado, vai para a tela home e mostra o BottomNavigationView
             navView.visibility = View.VISIBLE // Mostrar o BottomNavigationView

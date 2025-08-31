@@ -13,6 +13,7 @@ import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
@@ -21,6 +22,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.navigation.NavController
 import com.example.pathfinder.R
 import com.example.pathfinder.data.models.Destino
 import com.example.pathfinder.databinding.FragmentHomeBinding
@@ -54,6 +56,9 @@ import com.example.pathfinder.util.FirebaseUtil
 
 class HomeFragment : Fragment() {
 
+    // Listener guard to avoid calling requireActivity() when fragment is detached
+    private var navDestinationListener: NavController.OnDestinationChangedListener? = null
+
     companion object {
         private const val REQUEST_CODE_SEARCH = 1001
     }
@@ -61,6 +66,7 @@ class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
     private lateinit var targetIcon: ImageView
+    private lateinit var saveIcon: ImageView
     private lateinit var searchPlaceView: SearchPlaceBottomSheetView
     private val homeViewModel: HomeViewModel by activityViewModels()
     private val rotaSharedViewModel: RotaSharedViewModel by activityViewModels()
@@ -89,6 +95,7 @@ class HomeFragment : Fragment() {
         }
 
         targetIcon = binding.root.findViewById(R.id.ac_target)
+        saveIcon = binding.root.findViewById(R.id.btn_salvar)
         searchPlaceView = binding.root.findViewById(R.id.search_place_view)
         searchPlaceView.initialize(CommonSearchViewConfiguration(DistanceUnitType.METRIC))
 
@@ -228,9 +235,13 @@ class HomeFragment : Fragment() {
             requireActivity().supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_main) as NavHostFragment
         val navController = navHostFragment.navController
 
-        navController.addOnDestinationChangedListener { _, _, _ ->
-            NavigationViewUtils.toggleActionBarForScreen(requireActivity(), true) // para esconder
+        // Register listener safely: check isAdded() before calling requireActivity()
+        navDestinationListener = NavController.OnDestinationChangedListener { _, _, _ ->
+            if (isAdded) {
+                NavigationViewUtils.toggleActionBarForScreen(requireActivity(), true)
+            }
         }
+        navController.addOnDestinationChangedListener(navDestinationListener!!)
 
         binding.root.findViewById<View>(R.id.btn_iniciar_rota).setOnClickListener{
             esconderComponentes()
@@ -290,13 +301,17 @@ class HomeFragment : Fragment() {
                 if (rotaAtual != null) {
                     // Atualiza o nome da rota
                     rotaAtual.nomeRota = nomeRota
-                    rotaAtual.dtModificacaoRota = Timestamp.now()
+                    rotaAtual.dtModificacaoRota = com.google.firebase.Timestamp.now()
                     rotaAtual.distanciaRota = rotaAtual.destinosRota.sumOf { it.distancia ?: 0.0 }
 
                     // Salva a rota no Firestore
-                    val rotaRepository = RotaRepository()
+                    val rotaRepository = com.example.pathfinder.data.repositories.RotaRepository()
                     rotaRepository.salvarRota(rotaAtual, {
                         Toast.makeText(requireContext(), "Rota salva com sucesso", Toast.LENGTH_SHORT).show()
+                        // Ajuste visual imediato (mantido) e sincroniza estado no ViewModel
+                        saveIcon.setImageResource(R.drawable.content_save_all)
+                        saveIcon.setColorFilter(resources.getColor(R.color.blue, null))
+                        homeViewModel.marcarRotaComoSalva()
                     } , { exception->
                         Toast.makeText(requireContext(), "Erro ao salvar rota: ${exception.message}", Toast.LENGTH_SHORT).show()
                         Log.e("HomeFragment", "Erro ao salvar rota", exception)
@@ -373,6 +388,19 @@ class HomeFragment : Fragment() {
             showDestinos(destinos)
         }
 
+        // Atualiza o ícone reagindo apenas ao estado local
+        homeViewModel.rotaSalva.observe(viewLifecycleOwner) { salva ->
+            if (salva == true) {
+                saveIcon.setImageResource(R.drawable.content_save_all)
+                saveIcon.setColorFilter(resources.getColor(R.color.blue, null))
+            } else {
+                // Opcional: volte para o ícone padrão, se existir, e remova a cor
+                // saveIcon.setImageResource(R.drawable.content_save)
+                saveIcon.clearColorFilter()
+                saveIcon.setImageResource(R.drawable.content_save_all_outline)
+            }
+        }
+
         return root
     }
 
@@ -387,14 +415,16 @@ class HomeFragment : Fragment() {
         rotaSharedViewModel.rotaSelecionada.observe(viewLifecycleOwner) { rota ->
             rota?.let {
                 homeViewModel.substituirRotaAtual(it)
+                // Vinda do banco => considera salva (reforça o estado)
+                homeViewModel.marcarRotaComoSalva()
                 val destinos = it.destinosRota.orEmpty()
                 showDestinos(destinos)
 
-                val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
+                val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? com.example.pathfinder.ui.components.MapaFragment
                 if (mapaFragment != null && destinos.isNotEmpty()) {
                     mapaFragment.getUserLocation { location ->
                         location?.let { loc ->
-                            val origin = Point.fromLngLat(loc.longitude, loc.latitude)
+                            val origin = com.mapbox.geojson.Point.fromLngLat(loc.longitude, loc.latitude)
                             mapaFragment.requestRoutes(origin, destinos) {}
                             mapaFragment.updateCamera(origin, destinos.map { d -> d.localDestino })
                         } ?: Log.w("MapaFragment", "Localização do usuário indisponível")
@@ -411,6 +441,15 @@ class HomeFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Remove navController listener to prevent callbacks after fragment is detached
+        val navHostFragment = activity?.supportFragmentManager?.findFragmentById(R.id.nav_host_fragment_activity_main) as? NavHostFragment
+        val navController = navHostFragment?.navController
+        navDestinationListener?.let { listener ->
+            navController?.removeOnDestinationChangedListener(listener)
+            navDestinationListener = null
+        }
+        // Ensure map click listener removed
+        removerOnMapClickListener()
         _binding = null
     }
 
@@ -580,4 +619,6 @@ class HomeFragment : Fragment() {
             actionProfile.setImageResource(R.drawable.ic_profile)
         }
     }
+
+
 }

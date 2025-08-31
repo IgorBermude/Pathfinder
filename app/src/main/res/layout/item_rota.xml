@@ -10,13 +10,15 @@
     app:cardBackgroundColor="?attr/colorSurface">
 
     <LinearLayout
+        android:id="@+id/container_item"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:clickable="true"
         android:focusable="true"
         android:foreground="?attr/selectableItemBackground"
-        android:padding="10dp">
+        android:padding="10dp"
+        android:descendantFocusability="blocksDescendants"> <!-- evita que filhos capturem clique/foco -->
 
         <ImageView
             android:id="@+id/iv_icone"
@@ -25,7 +27,7 @@
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="12dp"
             android:importantForAccessibility="no"
-            android:contentDescription="Ícone"
+            android:contentDescription="@string/ic_icone_desc"
             android:src="@drawable/ic_route_overview"/>
 
         <LinearLayout
@@ -42,7 +44,7 @@
                 android:ellipsize="end"
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
-                android:text="Rota 1"
+                android:text="@string/rota_exemplo"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -52,7 +54,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:alpha="0.8"
-                android:text="Distância estimada: 10 km"
+                android:text="@string/distancia_exemplo"
                 android:textColor="?attr/colorOnSurface" />
 
             <TextView
@@ -61,7 +63,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:alpha="0.6"
-                android:text="Modificada: 01/01/2024 12:00"
+                android:text="@string/modificada_exemplo"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="12sp"
                 android:visibility="gone" />
@@ -75,9 +77,11 @@
                 android:backgroundTint="?attr/colorPrimary"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="8dp"
-                android:text="Remover"
+                android:text="@string/remover"
                 android:textAllCaps="false"
-                android:textColor="?attr/colorOnPrimary" />
+                android:textColor="?attr/colorOnPrimary"
+                android:focusable="false"
+                android:focusableInTouchMode="false" /> <!-- impede que o botão roube foco/click -->
         </LinearLayout>
     </LinearLayout>
 

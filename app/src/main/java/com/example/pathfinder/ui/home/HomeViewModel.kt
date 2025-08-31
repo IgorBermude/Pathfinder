@@ -28,6 +28,10 @@ class HomeViewModel : ViewModel() {
     private val _rotas = MutableLiveData<List<Rota>>(emptyList())
     val rotas: LiveData<List<Rota>> = _rotas
 
+    // Estado local: indica se a última rota está salva (sem consultar o banco)
+    private val _rotaSalva = MutableLiveData(false)
+    val rotaSalva: LiveData<Boolean> = _rotaSalva
+
     // Obtém a última rota existente, se houver
     fun obterUltimaRota(): Rota? {
         val rotasAtuais = _rotas.value ?: emptyList()
@@ -46,6 +50,7 @@ class HomeViewModel : ViewModel() {
             nomeRota = nomeRota
         )
         adicionarRota(novaRota)
+        _rotaSalva.value = false
     }
 
     // Adiciona uma nova rota à lista
@@ -73,6 +78,7 @@ class HomeViewModel : ViewModel() {
                 dtModificacaoRota = Timestamp.now(),
             )
             atualizarUltimaRota(novaRota)
+            _rotaSalva.value = false
         }
     }
 
@@ -86,12 +92,20 @@ class HomeViewModel : ViewModel() {
                 dtModificacaoRota = Timestamp.now()
             )
             atualizarUltimaRota(novaRota)
+            _rotaSalva.value = false
         }
     }
 
     // Substitui a rota atual pela rota carregada
     fun substituirRotaAtual(rota: Rota) {
         _rotas.value = listOf(rota)
+        // Assume que veio do banco
+        _rotaSalva.value = true
+    }
+
+    // Marcar explicitamente como salva após sucesso no Firestore
+    fun marcarRotaComoSalva() {
+        _rotaSalva.value = true
     }
 
     // SearchEngine singleton para ser reutilizado

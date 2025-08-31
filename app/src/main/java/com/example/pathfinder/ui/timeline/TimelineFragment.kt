@@ -14,6 +14,7 @@ import com.example.pathfinder.data.models.Postagem
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 
 class TimelineFragment : Fragment() {
@@ -21,6 +22,7 @@ class TimelineFragment : Fragment() {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
+    private var postsListener: ListenerRegistration? = null
     private lateinit var postsAdapter: PostsAdapter
     private lateinit var rvPosts: RecyclerView
 
@@ -49,6 +51,8 @@ class TimelineFragment : Fragment() {
                 else -> {}
             }
         }
+        // safe context usage: requireContext() is ok here because onCreateView -> fragment is attached,
+        // but keep as is. RecyclerView config
         rvPosts.layoutManager = LinearLayoutManager(requireContext())
         rvPosts.adapter = postsAdapter
 
@@ -56,11 +60,16 @@ class TimelineFragment : Fragment() {
     }
 
     private fun loadPosts() {
-        firestore.collection("postagens")
+        // guarda o ListenerRegistration para poder remover quando o fragment for destruído
+        postsListener = firestore.collection("postagens")
             .orderBy("horaPostagem", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
+                // Se o fragment não estiver anexado, ignora o callback
+                if (!isAdded) return@addSnapshotListener
+
+                val ctx = context
                 if (error != null) {
-                    Toast.makeText(requireContext(), "Erro ao carregar postagens.", Toast.LENGTH_SHORT).show()
+                    ctx?.let { Toast.makeText(it, "Erro ao carregar postagens.", Toast.LENGTH_SHORT).show() }
                     return@addSnapshotListener
                 }
 
@@ -76,10 +85,16 @@ class TimelineFragment : Fragment() {
         firestore.collection("postagens").document(post.idPostagem ?: return)
             .delete()
             .addOnSuccessListener {
-                Toast.makeText(requireContext(), "Post deletado", Toast.LENGTH_SHORT).show()
+                context?.let { Toast.makeText(it, "Post deletado", Toast.LENGTH_SHORT).show() }
             }
             .addOnFailureListener {
-                Toast.makeText(requireContext(), "Erro ao deletar post", Toast.LENGTH_SHORT).show()
+                context?.let { Toast.makeText(it, "Erro ao deletar post", Toast.LENGTH_SHORT).show() }
             }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        postsListener?.remove()
+        postsListener = null
     }
 }

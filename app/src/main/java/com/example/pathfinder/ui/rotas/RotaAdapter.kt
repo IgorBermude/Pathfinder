@@ -29,6 +29,7 @@ class RotaAdapter(
         val distancia: TextView = itemView.findViewById(R.id.tv_distancia)
         val dtModificacao: TextView = itemView.findViewById(R.id.tv_dt_modificacao)
         val btnRemover: Button = itemView.findViewById(R.id.btn_remover)
+        val container: View = itemView.findViewById(R.id.container_item)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RotaViewHolder {
@@ -70,20 +71,19 @@ class RotaAdapter(
                 }
                 .start()
         }
-        holder.itemView.setOnClickListener {
-            // Animação de clique: reduz a escala e volta ao normal
-            holder.itemView.animate()
+
+        // Mover clique/animacao para o container (LinearLayout clicável)
+        holder.container.setOnClickListener {
+            holder.container.animate()
                 .scaleX(0.95f)
                 .scaleY(0.95f)
                 .setDuration(80)
                 .withEndAction {
-                    holder.itemView.animate()
+                    holder.container.animate()
                         .scaleX(1f)
                         .scaleY(1f)
                         .setDuration(80)
-                        .withEndAction {
-                            onSelect(rota)
-                        }
+                        .withEndAction { onSelect(rota) }
                         .start()
                 }
                 .start()

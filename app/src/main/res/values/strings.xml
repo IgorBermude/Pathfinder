@@ -35,4 +35,11 @@
     <string name="search_icon_desc">Ícone de pesquisa</string>
     <string name="foto_usuario">Foto de perfil</string>
     <string name="more_options">Mais opções</string>
+
+    <!-- strings usadas em item_rota.xml -->
+    <string name="ic_icone_desc">Ícone da rota</string>
+    <string name="rota_exemplo">Rota exemplo</string>
+    <string name="distancia_exemplo">Distância estimada: Desconhecida</string>
+    <string name="modificada_exemplo">Modificada: --</string>
+    <string name="remover">Remover</string>
 </resources>
