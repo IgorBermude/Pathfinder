@@ -18,8 +18,11 @@ import com.example.pathfinder.LoginUiState
 import com.example.pathfinder.R
 import com.example.pathfinder.data.AuthViewModel
 import com.example.pathfinder.data.models.Usuario
+import com.example.pathfinder.data.repositories.UsuarioRepository
 import com.example.pathfinder.databinding.FragmentRegisterBinding
 import com.example.pathfinder.util.FuncoesUteis
+import android.text.Editable
+import android.text.TextWatcher
 import kotlinx.coroutines.launch
 
 class RegisterFragment : Fragment() {
@@ -37,6 +40,8 @@ class RegisterFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val usuarioRepository = UsuarioRepository()
 
         lifecycleScope.launch {
             //Previne bugs
@@ -60,6 +65,32 @@ class RegisterFragment : Fragment() {
                 }
             }
         }
+
+        // Máscara para data de nascimento (dd/MM/yyyy)
+        binding?.etBirthDate?.addTextChangedListener(object : TextWatcher {
+            private var isUpdating = false
+            private val mask = "##/##/####"
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                if (isUpdating) return
+                isUpdating = true
+                val str = s.toString().replace("[^\\d]".toRegex(), "")
+                var formatted = ""
+                var i = 0
+                for (m in mask.toCharArray()) {
+                    if (m != '#') {
+                        if (i < str.length) formatted += m
+                    } else {
+                        if (i < str.length) formatted += str[i]
+                        else break
+                        i++
+                    }
+                }
+                s?.replace(0, s.length, formatted)
+                isUpdating = false
+            }
+        })
 
         binding?.btnRegister?.setOnClickListener {
             val name = binding?.etName?.text.toString()
@@ -86,7 +117,7 @@ class RegisterFragment : Fragment() {
                 val usuario = Usuario(
                     nomeUsuario = name,
                     emailUsuario = email,
-                    senhaUsuario = password,
+                    senhaUsuario = usuarioRepository.criptografarSenha(password),
                     idadeUsuario = age,
                     fotoUsuario = null
                 )

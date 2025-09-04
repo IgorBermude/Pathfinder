@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.example.pathfinder.R
 import com.example.pathfinder.data.models.Destino
@@ -54,22 +55,37 @@ class RotaAdapter(
         } ?: run {
             holder.dtModificacao.visibility = View.GONE
         }
+
+        // Substitui o clique direto por um diálogo de confirmação
         holder.btnRemover.setOnClickListener {
-            holder.btnRemover.animate()
-                .scaleX(0.95f)
-                .scaleY(0.95f)
-                .setDuration(80)
-                .withEndAction {
+            val context = holder.itemView.context
+            val nomeRota = rota.nomeRota ?: "esta rota"
+            AlertDialog.Builder(context)
+                .setTitle("Remover rota")
+                .setMessage("Deseja remover a rota \"$nomeRota\"?")
+                .setPositiveButton("Remover") { dialog, _ ->
+                    // Executa a animação e chama onRemove após a animação
                     holder.btnRemover.animate()
-                        .scaleX(1f)
-                        .scaleY(1f)
+                        .scaleX(0.95f)
+                        .scaleY(0.95f)
                         .setDuration(80)
                         .withEndAction {
-                            onRemove(rota)
+                            holder.btnRemover.animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(80)
+                                .withEndAction {
+                                    onRemove(rota)
+                                }
+                                .start()
                         }
                         .start()
+                    dialog.dismiss()
                 }
-                .start()
+                .setNegativeButton("Cancelar") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
         }
 
         // Mover clique/animacao para o container (LinearLayout clicável)

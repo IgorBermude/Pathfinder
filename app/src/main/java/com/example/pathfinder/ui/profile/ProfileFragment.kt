@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 import android.view.inputmethod.InputMethodManager
+import com.example.pathfinder.data.repositories.UsuarioRepository
 
 
 class ProfileFragment : Fragment() {
@@ -56,6 +57,7 @@ class ProfileFragment : Fragment() {
     var progressBar: ProgressBar? = null
     var imageBase64: String? = null
     var usuarioAtual: Usuario? = null
+    var senhaUsuario: String? = null // Armazena a senha atual do usuário
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -98,43 +100,37 @@ class ProfileFragment : Fragment() {
         val emailTxt = view.findViewById<TextView>(R.id.email)
         val senhaTxt = view.findViewById<TextView>(R.id.senha)
         val idadeTxt = view.findViewById<TextView>(R.id.idade)
-        val enderecoTxt = view.findViewById<TextView>(R.id.endereco)
 
         val editarSenhaTxt = view.findViewById<TextView>(R.id.editarSenha)
         val editarEmailTxt = view.findViewById<TextView>(R.id.editarEmail)
         val editarIdadeTxt = view.findViewById<TextView>(R.id.editarIdade)
         val editarNomeUsuarioTxt = view.findViewById<TextView>(R.id.editarNomeUsuario)
-        val editarEnderecoTxt = view.findViewById<TextView>(R.id.editarEndereco)
 
         editarSenhaTxt.setOnClickListener {
             editarSenhaTxt.visibility = View.INVISIBLE
             val parent = senhaTxt.parent as ViewGroup
-            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, senhaTxt)
-            editarCampoTexto(editText, parent, senhaTxt, editarSenhaTxt)
+            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, senhaTxt, "")
+            //editarCampoTexto(editText, parent, senhaTxt, editarSenhaTxt)
+            // Alterar para ser editada individualmente.
+            AlterarSenhaUsuario(editText, parent, senhaTxt, editarSenhaTxt)
         }
         editarEmailTxt.setOnClickListener {
             editarEmailTxt.visibility = View.INVISIBLE
             val parent = emailTxt.parent as ViewGroup
-            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, emailTxt)
+            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, emailTxt, emailTxt.text.toString())
             editarCampoTexto(editText, parent, emailTxt, editarEmailTxt)
         }
         editarIdadeTxt.setOnClickListener {
             editarIdadeTxt.visibility = View.INVISIBLE
             val parent = idadeTxt.parent as ViewGroup
-            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, idadeTxt)
+            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, idadeTxt, idadeTxt.text.toString())
             editarCampoTexto(editText, parent, idadeTxt, editarIdadeTxt)
         }
         editarNomeUsuarioTxt.setOnClickListener {
             editarNomeUsuarioTxt.visibility = View.INVISIBLE
             val parent = nomeUsuarioTxt.parent as ViewGroup
-            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, nomeUsuarioTxt)
+            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, nomeUsuarioTxt, nomeUsuarioTxt.text.toString())
             editarCampoTexto(editText, parent, nomeUsuarioTxt, editarNomeUsuarioTxt)
-        }
-        editarEnderecoTxt.setOnClickListener {
-            editarEnderecoTxt.visibility = View.INVISIBLE
-            val parent = enderecoTxt.parent as ViewGroup
-            val editText = FuncoesUteis.trocarTextViewPorEditText(parent, enderecoTxt)
-            editarCampoTexto(editText, parent, enderecoTxt, editarEnderecoTxt)
         }
 
         // Botão de voltar com animação
@@ -174,7 +170,7 @@ class ProfileFragment : Fragment() {
             // Pega os dados atuais dos campos
             val nome = view.findViewById<TextView>(R.id.nomeUsuario).text.toString()
             val email = view.findViewById<TextView>(R.id.email).text.toString()
-            val senha = view.findViewById<TextView>(R.id.senha).text.toString()
+            //val senha = view.findViewById<TextView>(R.id.senha).text.toString()
             val idadeStr = view.findViewById<TextView>(R.id.idade).text.toString()
 
             // Converta idade para Timestamp se necessário (aqui mantido como String)
@@ -182,12 +178,31 @@ class ProfileFragment : Fragment() {
                 idUsuario = auth.currentUser?.uid,
                 nomeUsuario = nome,
                 emailUsuario = email,
-                senhaUsuario = senha,
+                senhaUsuario = senhaUsuario ?: usuarioAtual?.senhaUsuario ?: "",
                 idadeUsuario = FuncoesUteis.parseDate(idadeStr), // ajuste se necessário
                 fotoUsuario = imageBase64 ?: usuarioAtual?.fotoUsuario
             )
-
             authViewModel.alterar(usuario)
+
+            val user = FirebaseAuth.getInstance().currentUser
+            user?.updatePassword(senhaUsuario ?: usuarioAtual?.senhaUsuario ?: "")
+                ?.addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Toast.makeText(requireContext(), "Senha alterada com sucesso!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(requireContext(), "Erro ao alterar senha", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            /*user?.verifyBeforeUpdateEmail(email)
+                ?.addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Toast.makeText(requireContext(), "Email alterado com sucesso!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(requireContext(), "Erro ao alterar email", Toast.LENGTH_SHORT).show()
+                    }
+                }*/
+
+
 
             // Observa o resultado e mostra Toast
             lifecycleScope.launch {
@@ -253,11 +268,11 @@ class ProfileFragment : Fragment() {
                         if (usuarioAtual != null) {
                             view.findViewById<TextView>(R.id.textView2).text = usuarioAtual?.nomeUsuario
                             view.findViewById<TextView>(R.id.textView3).text = usuarioAtual?.emailUsuario
-                            view.findViewById<TextView>(R.id.senha).text = usuarioAtual?.senhaUsuario // Ocultar senha
+                            //view.findViewById<TextView>(R.id.senha).text = usuarioAtual?.senhaUsuario // Ocultar senha
+                            senhaUsuario = usuarioAtual?.senhaUsuario
                             view.findViewById<TextView>(R.id.email).text = usuarioAtual?.emailUsuario
                             view.findViewById<TextView>(R.id.idade).text = formatDate(usuarioAtual?.idadeUsuario)
                             view.findViewById<TextView>(R.id.nomeUsuario).text = usuarioAtual?.nomeUsuario
-                            view.findViewById<TextView>(R.id.endereco).text = usuarioAtual?.enderecoUsuario?.toString() ?: "Não informado"
                             val imageView = view.findViewById<ImageView>(R.id.imageView)
                             if (!usuarioAtual?.fotoUsuario.isNullOrEmpty()) {
                                 imageBase64 = usuarioAtual?.fotoUsuario
@@ -334,5 +349,41 @@ class ProfileFragment : Fragment() {
     private fun hideKeyboard(activity: Activity, view: View) {
         val imm = activity.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(view.windowToken, 0)
+    }
+
+    // A função vai abrir um diálogo para o usuário inserir a nova senha e setar em senhaUsuario
+    private fun AlterarSenhaUsuario(editText: EditText, parent: ViewGroup, textView: TextView, clickedText: TextView){
+        editText.isFocusableInTouchMode = true
+        editText.isFocusable = true
+        editText.requestFocus()
+        editText.setSelection(editText.text.length)
+        val imm = requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT)
+
+        val usuarioRepository = UsuarioRepository()
+
+        // Quando o usuário pressionar Enter ou sair do campo, transforma de volta em TextView
+        editText.setOnEditorActionListener { v, actionId, event ->
+            // Funciona corretamente
+            FuncoesUteis.trocarEditTextPorTextView(parent, editText, textView)
+            senhaUsuario = editText.text.toString()
+            senhaUsuario = usuarioRepository.criptografarSenha(senhaUsuario?:"")
+            true
+        }
+        editText.setOnFocusChangeListener { v, hasFocus ->
+            if (!hasFocus) {
+                v.postDelayed({
+                    // Verifica se o editText ainda está no parent antes de tentar trocar
+                    if (parent.indexOfChild(editText) != -1) {
+                        FuncoesUteis.trocarEditTextPorTextView(parent, editText, textView)
+                        senhaUsuario = editText.text.toString()
+                        senhaUsuario = usuarioRepository.criptografarSenha(senhaUsuario?:"")
+                    }
+                }, 100)
+            }
+            clickedText.visibility = View.VISIBLE
+        }
+        // Removido o uso de clearFocusOnKeyboardClose para evitar NPE
+        editText.clearFocusOnKeyboardClose(requireActivity())
     }
 }

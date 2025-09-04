@@ -42,12 +42,12 @@ object FuncoesUteis {
         }
     }
 
-    fun trocarTextViewPorEditText(parent: ViewGroup, textView: TextView): EditText {
+    fun trocarTextViewPorEditText(parent: ViewGroup, textView: TextView, texto: String): EditText {
         val index = parent.indexOfChild(textView)
         val editText = EditText(textView.context).apply {
             id = textView.id
             layoutParams = textView.layoutParams
-            setText(textView.text)
+            setText(texto)
             hint = textView.hint
             textSize = textView.textSize / resources.displayMetrics.scaledDensity
             setTextColor(textView.currentTextColor)

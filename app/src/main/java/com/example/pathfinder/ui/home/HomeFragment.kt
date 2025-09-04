@@ -5,9 +5,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
@@ -40,10 +40,7 @@ import com.mapbox.search.ResponseInfo
 import com.mapbox.search.ReverseGeoOptions
 import com.mapbox.search.SearchCallback
 import com.mapbox.search.result.SearchResult
-import com.mapbox.search.ui.view.CommonSearchViewConfiguration
-import com.mapbox.search.ui.view.DistanceUnitType
 import com.mapbox.search.ui.view.place.SearchPlace
-import com.mapbox.search.ui.view.place.SearchPlaceBottomSheetView
 import androidx.core.view.isGone
 import com.bumptech.glide.Glide
 import com.example.pathfinder.data.models.Usuario
@@ -52,7 +49,8 @@ import com.example.pathfinder.data.repositories.UsuarioRepository
 import com.google.firebase.Timestamp
 import com.example.pathfinder.ui.rotas.RotaSharedViewModel
 import com.example.pathfinder.util.FirebaseUtil
-
+import android.view.ViewGroup
+import android.view.LayoutInflater
 
 class HomeFragment : Fragment() {
 
@@ -67,7 +65,7 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var targetIcon: ImageView
     private lateinit var saveIcon: ImageView
-    private lateinit var searchPlaceView: SearchPlaceBottomSheetView
+    // remoção: private lateinit var searchPlaceView: SearchPlaceBottomSheetView
     private val homeViewModel: HomeViewModel by activityViewModels()
     private val rotaSharedViewModel: RotaSharedViewModel by activityViewModels()
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<LinearLayout>
@@ -96,11 +94,8 @@ class HomeFragment : Fragment() {
 
         targetIcon = binding.root.findViewById(R.id.ac_target)
         saveIcon = binding.root.findViewById(R.id.btn_salvar)
-        searchPlaceView = binding.root.findViewById(R.id.search_place_view)
-        searchPlaceView.initialize(CommonSearchViewConfiguration(DistanceUnitType.METRIC))
-
-        searchPlaceView.isFavoriteButtonVisible = false
-        searchPlaceView.isShareButtonVisible = false
+        // Removida inicialização do searchPlaceView e suas configurações/listeners
+        // ...existing code...
 
         val bottomSheet = binding.root.findViewById<LinearLayout>(R.id.bottom_sheet_destinos)
         val recyclerView = binding.root.findViewById<RecyclerView>(R.id.recycler_destinos)
@@ -110,7 +105,7 @@ class HomeFragment : Fragment() {
         val displayMetrics = resources.displayMetrics
         val navViewHeight = dpToPx(56) // Altura padrão do BottomNavigationView
         val peekHeight = navViewHeight + dpToPx(90) // "Pontinha" acima do navView
-        val midHeight = (displayMetrics.heightPixels * 0.40).toInt()
+        val midHeight = (displayMetrics.heightPixels * 0.35).toInt()
         val expandedHeight = (displayMetrics.heightPixels * 0.85).toInt() // Quase tela cheia
 
         val uiContainer = binding.root.findViewById<View>(R.id.ui_container)
@@ -121,28 +116,7 @@ class HomeFragment : Fragment() {
 
         txSelecionarDestino = binding.root.findViewById(R.id.tx_selecione_destino)
 
-        // Callback para mudanças de estado do searchPlaceView
-        searchPlaceView.addOnBottomSheetStateChangedListener { state, _ ->
-            when (state) {
-                SearchPlaceBottomSheetView.OPEN -> {
-                    txSelecionarDestino.visibility = View.GONE
-                    NavigationViewUtils.esconderBottomNavigationView(requireActivity())
-
-                }
-                SearchPlaceBottomSheetView.HIDDEN -> {
-                    val destinos = homeViewModel.obterUltimaRota()?.destinosRota ?: emptyList()
-                    if(bottomSheetBehavior.state == BottomSheetBehavior.STATE_HIDDEN && destinos.isEmpty()) {
-                        NavigationViewUtils.mostrarBottomNavigationView(requireActivity())
-                    } else{
-                        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
-                        bottomSheetBehavior.isHideable = false
-                    }
-                    val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
-                    mapaFragment?.removeLastMarker()
-                }
-                else -> {}
-            }
-        }
+        // Removido: searchPlaceView.addOnBottomSheetStateChangedListener { ... }
 
         bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
@@ -199,18 +173,6 @@ class HomeFragment : Fragment() {
             }
             override fun onSlide(bottomSheet: View, slideOffset: Float) {}
         })
-
-        bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-            override fun onStateChanged(bottomSheet: View, newState: Int) {
-                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-                    // Impede esconder via gesto
-                    //bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-                }
-            }
-
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {}
-        })
-
 
         // Lixeira do destino adapter
         destinoAdapter = DestinoAdapter(emptyList()) { destino ->
@@ -337,51 +299,7 @@ class HomeFragment : Fragment() {
             MapaBottomSheetFragment().show(parentFragmentManager, "RotaBottomSheet")
         }
 
-        searchPlaceView.addOnCloseClickListener {
-            searchPlaceView.hide()
-        }
-
-        searchPlaceView.addOnNavigateClickListener { searchPlace ->
-            val destination = Destino(
-                nomeDestino = searchPlace.name,
-                localDestino = searchPlace.coordinate,
-                distancia = searchPlace.distanceMeters,
-                endereco = listOf(
-                    searchPlace.address?.place.orEmpty(),
-                    searchPlace.address?.region.orEmpty(),
-                    searchPlace.address?.street.orEmpty(),
-                    searchPlace.address?.houseNumber.orEmpty()
-                ).filter { it.isNotBlank() }
-                    .joinToString(", ")            )
-            val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
-
-            mapaFragment?.getUserLocation { location ->
-                if (location != null) {
-                    val origin = Point.fromLngLat(location.longitude, location.latitude)
-                    val rotaAtual = homeViewModel.obterUltimaRota()
-
-                    if (rotaAtual != null) {
-                        homeViewModel.adicionarDestinoARotaExistente(destination)
-                    } else {
-                        homeViewModel.criarNovaRota(origin, destination, searchPlace.name, usuario?.idUsuario, searchPlace.distanceMeters)
-                    }
-
-                    val destinos = homeViewModel.obterUltimaRota()?.destinosRota ?: listOf(destination)
-                    mapaFragment.requestRoutes(origin, destinos) {
-                        //Toast.makeText(requireContext(), "Rota solicitada: $origin", Toast.LENGTH_SHORT).show()
-                        //searchPlaceView.hide()
-                        mapaFragment.removeLastMarker()
-                    }
-                    mapaFragment.updateCamera(origin, destination.localDestino)
-                } else {
-                    Toast.makeText(requireContext(), "Localização do usuário não disponível", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-
-        searchPlaceView.addOnShareClickListener { searchPlace ->
-            //startActivity(createShareIntent(searchPlace))
-        }
+        // Removido listeners de searchPlaceView (close, navigate, share) e lógica foi movida para showInfoLocal()
 
         homeViewModel.rotas.observe(viewLifecycleOwner) { rotas ->
             val destinos = rotas.lastOrNull()?.destinosRota ?: emptyList()
@@ -455,16 +373,15 @@ class HomeFragment : Fragment() {
 
     private fun onSearchResultSelected(searchResult: SearchResult, responseInfo: ResponseInfo) {
         val searchPlace = SearchPlace.createFromSearchResult(searchResult, responseInfo)
-        searchPlaceView.open(searchPlace)
 
-        bottomSheetBehavior.isHideable = true
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        // Ao invés de abrir searchPlaceView, inflamos item_info_local no container
+        showInfoLocal(searchPlace, searchResult.coordinate)
+        bottomSheetBehavior.isHideable = false
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
 
         val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
         val coordinate = searchResult.coordinate
-        if (mapaFragment != null && coordinate != null) {
-            mapaFragment.addMarker(coordinate.latitude(), coordinate.longitude())
-        }
+        mapaFragment?.addMarker(coordinate.latitude(), coordinate.longitude())
 
         NavigationViewUtils.esconderBottomNavigationView(requireActivity())
     }
@@ -501,9 +418,9 @@ class HomeFragment : Fragment() {
             btnIniciarRota.visibility = View.GONE
         } else {
             // Ao mostrar, começa no estado colapsado (meio)
-            val displayMetrics = resources.displayMetrics
+            /*val displayMetrics = resources.displayMetrics
             val targetHeight = (displayMetrics.heightPixels * 0.35).toInt()
-            bottomSheet.layoutParams.height = targetHeight
+            bottomSheet.layoutParams.height = targetHeight*/
             bottomSheet.requestLayout()
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
             bottomSheetBehavior.isHideable = false
@@ -581,9 +498,10 @@ class HomeFragment : Fragment() {
                 mapaFragment.reverseGeocode(ReverseGeoOptions(point), object : SearchCallback {
                     override fun onResults(results: List<SearchResult>, responseInfo: ResponseInfo) {
                         val searchPlace = SearchPlace.createFromSearchResult(results.first(), responseInfo)
-                        searchPlaceView.open(searchPlace)
-                        bottomSheetBehavior.isHideable = true
-                        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+                        // Ao invés de abrir searchPlaceView, inflamos item_info_local no container
+                        showInfoLocal(searchPlace, point)
+                        bottomSheetBehavior.isHideable = false
+                        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
                         mapaFragment.addMarker(point.latitude(), point.longitude())
                     }
 
@@ -599,6 +517,92 @@ class HomeFragment : Fragment() {
 
     fun getDestinoAdapter(): DestinoAdapter {
         return destinoAdapter
+    }
+
+    // Função central: infla item_info_local no container, popula campos e conecta os botões
+    private fun showInfoLocal(searchPlace: SearchPlace, coordinate: Point?) {
+        val container = requireView().findViewById<ViewGroup>(R.id.info_local_container)
+        val inflater = LayoutInflater.from(requireContext())
+        container.removeAllViews()
+        val infoLocalView = inflater.inflate(R.layout.item_info_local, container, false)
+        container.addView(infoLocalView)
+        container.visibility = View.VISIBLE
+
+        val destinosContainer = requireView().findViewById<View>(R.id.destinos_container)
+        destinosContainer.visibility = View.GONE
+
+        val titulo = infoLocalView.findViewById<TextView>(R.id.titulo_destinos)
+        val infoComp = infoLocalView.findViewById<TextView>(R.id.info_complementar)
+        val distanciaTv = infoLocalView.findViewById<TextView>(R.id.distancia)
+        val btnClose = infoLocalView.findViewById<ImageButton>(R.id.close_button)
+        val btnNavigate = infoLocalView.findViewById<Button>(R.id.btn_navigate)
+
+        titulo.text = searchPlace.name
+        val enderecoParts = listOfNotNull(
+            searchPlace.address?.place,
+            searchPlace.address?.region,
+            searchPlace.address?.street,
+            searchPlace.address?.houseNumber
+        ).filter { it.isNotBlank() }
+        infoComp.text = if (enderecoParts.isNotEmpty()) enderecoParts.joinToString(", ") else ""
+        distanciaTv.text = searchPlace.distanceMeters?.let { "${it.toInt()} m" } ?: ""
+
+        val mapaFragment = childFragmentManager.findFragmentById(R.id.map_container) as? MapaFragment
+
+        btnClose.setOnClickListener {
+            container.removeAllViews()
+            container.visibility = View.GONE
+            mapaFragment?.removeLastMarker()
+
+            // Se não houver nenhum destino na rota atual, fechar o bottom sheet
+            val destinos = homeViewModel.obterUltimaRota()?.destinosRota
+            if (destinos.isNullOrEmpty()) {
+                bottomSheetBehavior.isHideable = true
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            }
+            destinosContainer.visibility = View.VISIBLE
+        }
+
+        btnNavigate.setOnClickListener {
+            val destination = Destino(
+                nomeDestino = searchPlace.name,
+                localDestino = coordinate ?: searchPlace.coordinate,
+                distancia = searchPlace.distanceMeters,
+                endereco = enderecoParts.joinToString(", ")
+            )
+            mapaFragment?.getUserLocation { location ->
+                if (location != null) {
+                    val origin = Point.fromLngLat(location.longitude, location.latitude)
+                    val rotaAtual = homeViewModel.obterUltimaRota()
+                    if (rotaAtual != null) {
+                        homeViewModel.adicionarDestinoARotaExistente(destination)
+                    } else {
+                        homeViewModel.criarNovaRota(origin, destination, searchPlace.name, usuario?.idUsuario, searchPlace.distanceMeters)
+                    }
+                    val destinos = homeViewModel.obterUltimaRota()?.destinosRota ?: listOf(destination)
+                    mapaFragment.requestRoutes(origin, destinos) {
+                        mapaFragment.removeLastMarker()
+                    }
+                    mapaFragment.updateCamera(origin, destination.localDestino)
+
+
+                    container.removeAllViews()
+                    container.visibility = View.GONE
+                    bottomSheetBehavior.isHideable = false
+                    bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+
+                    destinosContainer.visibility = View.VISIBLE
+                 } else {
+                     Toast.makeText(requireContext(), "Localização do usuário não disponível", Toast.LENGTH_SHORT).show()
+                 }
+             }
+         }
+
+        // Ajustes de UI quando mostrar info local
+        // O problema está relacionado com essas 3 linhas a baixo
+        bottomSheetBehavior.isHideable = true
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        NavigationViewUtils.esconderBottomNavigationView(requireActivity())
     }
 
     //Concertar
@@ -620,5 +624,8 @@ class HomeFragment : Fragment() {
         }
     }
 
-
+    override fun onResume() {
+        super.onResume()
+        //bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+    }
 }

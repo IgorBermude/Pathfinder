@@ -110,13 +110,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- BottomSheetView da MapBox -->
-    <com.mapbox.search.ui.view.place.SearchPlaceBottomSheetView
-        android:id="@+id/search_place_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom" />
-
     <!-- Inclua o BottomSheet de destinos -->
     <include
         layout="@layout/bottom_sheet_destinos"

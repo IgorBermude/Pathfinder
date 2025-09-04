@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- BottomSheet de destinos (dinâmico) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:paddingTop="16dp"
     android:paddingBottom="12dp"
@@ -24,54 +24,92 @@
         android:background="@drawable/bg_drag_indicator"
         android:layout_marginBottom="12dp"/>
 
-    <FrameLayout
-        android:id="@+id/route_info_container"
+
+    <!-- Tornar todo o layout rolável -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/bottom_sheet_scroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="12dp"/>
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:clipToPadding="false">
 
-    <TextView
-        android:id="@+id/titulo_destinos"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Destinos"
-        android:textStyle="bold"
-        android:textSize="18sp"
-        android:textColor="@color/black"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="8dp"/>
-
-    <LinearLayout
-        android:id="@+id/route_info"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="8dp">
-
-        <TextView
-            android:id="@+id/tx_nome_rota"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Nome rota"
-            android:textSize="17sp"
-            android:layout_weight="1"/>
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tx_qtd_destinos"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Qtd. destinos"
-            android:textSize="17sp"
-            android:gravity="end"
-            android:layout_weight="1"/>
-    </LinearLayout>
+            <FrameLayout
+                android:id="@+id/route_info_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="12dp"/>
 
+            <FrameLayout
+                android:id="@+id/info_local_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="12dp"/>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_destinos"
-        android:layout_width="match_parent"
-        android:layout_height="193dp"
-        android:nestedScrollingEnabled="false" />
+            <FrameLayout
+                android:id="@+id/destinos_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/titulo_destinos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Destinos"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
+                        android:textColor="@color/black"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="8dp"/>
+
+                    <LinearLayout
+                        android:id="@+id/route_info"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:id="@+id/tx_nome_rota"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="Nome rota"
+                            android:textSize="17sp"
+                            android:layout_weight="1"/>
+
+                        <TextView
+                            android:id="@+id/tx_qtd_destinos"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="Qtd. destinos"
+                            android:textSize="17sp"
+                            android:gravity="end"
+                            android:layout_weight="1"/>
+                    </LinearLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recycler_destinos"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false" />
+                </LinearLayout>
+            </FrameLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
 </LinearLayout>

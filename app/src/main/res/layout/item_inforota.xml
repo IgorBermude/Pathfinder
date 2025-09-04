@@ -12,7 +12,6 @@
         android:visibility="invisible"
         app:cardElevation="8dp"
         app:cardUseCompatPadding="false"
-        app:cardBackgroundColor="#F5F5F5"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">

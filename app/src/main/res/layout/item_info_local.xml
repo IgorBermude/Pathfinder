@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"> <!-- { changed: antes match_parent } -->
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/tripProgressCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:cardElevation="8dp"
+        app:cardUseCompatPadding="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"> <!-- { changed: garante que card se ajuste ao conteúdo } -->
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <!-- Nome do local -->
+            <TextView
+                android:id="@+id/titulo_destinos"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="Nome do Local"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toStartOf="@+id/close_button"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Informações complementares -->
+            <TextView
+                android:id="@+id/info_complementar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="8dp"
+                android:text="Informações complementares"
+                android:textColor="#888888"
+                android:textSize="14sp"
+                app:layout_constraintEnd_toStartOf="@+id/close_button"
+                app:layout_constraintStart_toStartOf="@id/titulo_destinos"
+                app:layout_constraintTop_toBottomOf="@id/titulo_destinos" />
+
+            <!-- Botão X para fechar -->
+            <ImageButton
+                android:id="@+id/close_button"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Fechar"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="@android:color/holo_blue_dark"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Distância em metros -->
+            <TextView
+                android:id="@+id/distancia"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text=""
+                android:textColor="#666666"
+                android:textSize="13sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/close_button" />
+
+            <!-- Botão NAVIGATE azul com ícone à esquerda -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btn_navigate"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/bg_button_blue"
+                android:text="NAVIGATE"
+                android:textAllCaps="true"
+                android:textColor="@android:color/white"
+                android:drawableStart="@android:drawable/ic_menu_directions"
+                android:drawablePadding="12dp"
+                android:gravity="center_vertical|center"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintTop_toBottomOf="@id/info_complementar"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

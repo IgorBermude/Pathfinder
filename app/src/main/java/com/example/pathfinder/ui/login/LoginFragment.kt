@@ -23,7 +23,9 @@ import android.widget.CheckBox
 import android.widget.TextView
 import com.example.pathfinder.ui.MainActivity
 import androidx.activity.OnBackPressedCallback
+import at.favre.lib.crypto.bcrypt.BCrypt
 import com.example.pathfinder.data.models.Usuario
+import com.example.pathfinder.data.repositories.UsuarioRepository
 import com.google.android.material.textfield.TextInputEditText
 
 class LoginFragment : Fragment() {
@@ -46,6 +48,8 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         navController = view.findNavController()
+
+        val usuarioRepository = UsuarioRepository()
 
         val loginInfoText = view.findViewById<TextView>(R.id.tvLoginInfo)
         cbRememberMe = view.findViewById(R.id.cbRememberMe)
@@ -98,30 +102,46 @@ class LoginFragment : Fragment() {
         }
 
         binding?.btnLogin?.setOnClickListener {
-            val email: String = binding?.etEmail?.text.toString()
-            val password: String = binding?.etPassword?.text.toString()
+            // Use as referências obtidas via findViewById (etEmail / etPassword) para evitar mistura com binding?
+            val email: String = etEmail.text?.toString()?.trim() ?: ""
+            val password: String = etPassword.text?.toString() ?: ""
 
             val editor = prefs.edit()
             if (cbRememberMe.isChecked) {
                 editor.putBoolean("remember_me", true)
-                editor.putString("saved_email", etEmail.text.toString())
-                editor.putString("saved_password", etPassword.text.toString())
+                editor.putString("saved_email", email)
+                editor.putString("saved_password", password)
             } else {
                 editor.clear()
             }
             editor.apply()
 
             if (email.isNotEmpty() && password.isNotEmpty()) {
-                val usuario = Usuario(emailUsuario = email, senhaUsuario = password)
-                lifecycleScope.launch {
-                    vm.login(usuario)
+                // Recupera o usuário do banco pelo e-mail
+                usuarioRepository.buscarPorEmail(email).observe(viewLifecycleOwner) { usuario ->
+                    if (usuario != null) {
+                        val storedHash = usuario.senhaUsuario ?: ""
+                        if (usuarioRepository.verificarSenha(password, storedHash)) {
+                            lifecycleScope.launch {
+                                vm.login(usuario)
+                            }
+                        } else {
+                            loginInfoText.visibility = View.VISIBLE
+                            loginInfoText.text = "Senha incorreta"
+                            loginInfoText.setTextColor(resources.getColor(R.color.red))
+                        }
+                    } else {
+                        loginInfoText.visibility = View.VISIBLE
+                        loginInfoText.text = "Usuário não encontrado"
+                        loginInfoText.setTextColor(resources.getColor(R.color.red))
+                    }
                 }
             } else {
-                //Toast.makeText(requireContext(), "Por favor preencha todos os campos", Toast.LENGTH_SHORT).show()
                 loginInfoText.visibility = View.VISIBLE
                 loginInfoText.text = "Por favor preencha todos os campos"
                 loginInfoText.setTextColor(resources.getColor(R.color.black))
             }
+
         }
 
         binding?.tvCreateAccount?.setOnClickListener{

@@ -96,6 +96,9 @@ dependencies {
     // Picasso for image loading
     implementation("com.squareup.picasso:picasso:2.8")
 
+    // BCrypt for password hashing
+    implementation("at.favre.lib:bcrypt:0.9.0")
+
     implementation(libs.androidx.legacy.support.v4)
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.auth)
